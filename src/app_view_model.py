@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from src.adapters.scenario_catalog import list_scenario_summaries
+from src.adapters.scenario_loader import load_scenario
 from src.domain.scenario import ScenarioSummary
 from src.scheduler.contract import ScheduleResult
 from src.scheduler.stub import StubSchedulerStrategy
@@ -16,7 +17,8 @@ class InitialViewModel:
 def build_initial_view_model(selected_scenario_id: str | None) -> InitialViewModel:
     scenarios = list_scenario_summaries()
     selected_scenario = _select_scenario(scenarios, selected_scenario_id)
-    schedule_result = StubSchedulerStrategy().schedule(selected_scenario)
+    scenario = load_scenario(selected_scenario.id)
+    schedule_result = StubSchedulerStrategy().schedule(scenario)
 
     return InitialViewModel(
         scenarios=scenarios,

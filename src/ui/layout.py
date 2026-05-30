@@ -31,6 +31,14 @@ def render_initial_view(
         for warning in schedule_result.warnings:
             st.warning(warning)
 
+    if schedule_result.score_breakdown:
+        weights = schedule_result.score_breakdown.components.get("weights", {})
+        if weights:
+            st.subheader("Scenario Weights")
+            st.write(f"Individual: {weights.get('individual', 'N/A')}")
+            st.write(f"Operator: {weights.get('operator', 'N/A')}")
+            st.write(f"Overall: {weights.get('overall', 'N/A')}")
+
     st.subheader("Bus Timelines")
     st.write("No bus plans yet.")
 
