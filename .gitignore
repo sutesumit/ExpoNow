@@ -9,3 +9,4 @@ dist/
 build/
 .streamlit/
 docs/
+.kilo/
