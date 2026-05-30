@@ -1,4 +1,4 @@
 import streamlit as st
 
 st.set_page_config(page_title="ExpoNow")
-st.title("ExpoNow")
+st.title("ExpoNow 1.0 by sumit sute")
