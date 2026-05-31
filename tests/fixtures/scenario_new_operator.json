@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "scenario_new_operator",
+  "name": "New Operator Test Fixture",
+  "description": "Contains a bus with operator express_red (not in assignment scenarios). Segment A-B changed to 130 km to prove distances are data-driven.",
+  "route": {
+    "name": "Bengaluru-Kochi",
+    "stops": ["Bengaluru", "A", "B", "C", "D", "Kochi"],
+    "segments": [
+      { "from": "Bengaluru", "to": "A", "distance_km": 100 },
+      { "from": "A", "to": "B", "distance_km": 130 },
+      { "from": "B", "to": "C", "distance_km": 100 },
+      { "from": "C", "to": "D", "distance_km": 120 },
+      { "from": "D", "to": "Kochi", "distance_km": 100 }
+    ]
+  },
+  "stations": [
+    { "id": "A", "charger_count": 1 },
+    { "id": "B", "charger_count": 1 },
+    { "id": "C", "charger_count": 1 },
+    { "id": "D", "charger_count": 1 }
+  ],
+  "charging_policy": {
+    "range_km": 240,
+    "full_charge_minutes": 25
+  },
+  "travel_policy": {
+    "speed_kmph": 60
+  },
+  "weights": {
+    "individual": 1.0,
+    "operator": 1.0,
+    "overall": 1.0
+  },
+  "buses": [
+    { "id": "bus-BK-01", "operator": "express_red", "direction": "Bengaluru->Kochi", "departure": "19:00" },
+    { "id": "bus-BK-02", "operator": "kpn", "direction": "Bengaluru->Kochi", "departure": "19:15" },
+    { "id": "bus-KB-01", "operator": "freshbus", "direction": "Kochi->Bengaluru", "departure": "19:00" },
+    { "id": "bus-KB-02", "operator": "express_red", "direction": "Kochi->Bengaluru", "departure": "19:15" }
+  ]
+}

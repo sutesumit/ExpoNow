@@ -15,7 +15,7 @@ def parse_hhmm(value: str) -> int:
 
 
 def format_minutes(minutes: int) -> str:
-    if not isinstance(minutes, int) or minutes < 0 or minutes > 1439:
+    if not isinstance(minutes, int) or minutes < 0:
         raise ValueError(f"Invalid minutes: {minutes!r}")
     hour = minutes // 60
     minute = minutes % 60

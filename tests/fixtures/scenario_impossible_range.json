@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "scenario_impossible_range",
+  "name": "Impossible Range Edge Fixture",
+  "description": "Battery range (50 km) is shorter than every route segment. Scheduler should return infeasible with a clear explanation.",
+  "route": {
+    "name": "Bengaluru-Kochi",
+    "stops": ["Bengaluru", "A", "Kochi"],
+    "segments": [
+      { "from": "Bengaluru", "to": "A", "distance_km": 100 },
+      { "from": "A", "to": "Kochi", "distance_km": 440 }
+    ]
+  },
+  "stations": [
+    { "id": "A", "charger_count": 1 }
+  ],
+  "charging_policy": {
+    "range_km": 50,
+    "full_charge_minutes": 25
+  },
+  "travel_policy": {
+    "speed_kmph": 60
+  },
+  "weights": {
+    "individual": 1.0,
+    "operator": 1.0,
+    "overall": 1.0
+  },
+  "buses": [
+    { "id": "bus-BK-01", "operator": "kpn", "direction": "Bengaluru->Kochi", "departure": "19:00" }
+  ]
+}

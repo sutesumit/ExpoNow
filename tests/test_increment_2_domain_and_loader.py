@@ -466,10 +466,12 @@ class CatalogIntegrationTests(unittest.TestCase):
         vm = build_initial_view_model("scenario_1")
         sb = vm.schedule_result.score_breakdown
         self.assertIsNotNone(sb)
-        self.assertIn("weights", sb.components)
-        self.assertEqual(sb.components["weights"]["individual"], 1.0)
-        self.assertEqual(sb.components["weights"]["operator"], 1.0)
-        self.assertEqual(sb.components["weights"]["overall"], 1.0)
+        self.assertIn("individual_wait", sb.components)
+        self.assertIn("operator_smoothness", sb.components)
+        self.assertIn("overall_network", sb.components)
+        self.assertEqual(sb.components["individual_wait"]["weight"], 1.0)
+        self.assertEqual(sb.components["operator_smoothness"]["weight"], 1.0)
+        self.assertEqual(sb.components["overall_network"]["weight"], 1.0)
 
 
 # ---------------------------------------------------------------------------

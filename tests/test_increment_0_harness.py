@@ -41,7 +41,26 @@ class IncrementZeroHarnessTests(unittest.TestCase):
         self.assertEqual(result.metrics.total_buses, 20)
         self.assertIsInstance(result.score_breakdown, ScoreBreakdown)
         self.assertIn("weights", result.score_breakdown.components)
-        self.assertTrue(
+
+    def test_real_scheduler_returns_populated_schedule_result(self):
+        from src.adapters.scenario_loader import load_scenario
+        from src.scheduler.contract import ScheduleMetrics, ScoreBreakdown
+        from src.scheduler.strategies.custom_heuristic import CustomHeuristicStrategy
+
+        scenario = load_scenario("scenario_1")
+        result = CustomHeuristicStrategy().schedule(scenario)
+
+        self.assertTrue(result.feasible)
+        self.assertEqual(result.scenario_id, "scenario_1")
+        self.assertTrue(len(result.bus_plans) > 0)
+        self.assertTrue(len(result.station_reservations) > 0)
+        self.assertIsInstance(result.metrics, ScheduleMetrics)
+        self.assertEqual(result.metrics.total_buses, 20)
+        self.assertIsInstance(result.score_breakdown, ScoreBreakdown)
+        self.assertIn("individual_wait", result.score_breakdown.components)
+        self.assertIn("operator_smoothness", result.score_breakdown.components)
+        self.assertIn("overall_network", result.score_breakdown.components)
+        self.assertFalse(
             any(
                 "Scheduling is not implemented yet" in warning
                 for warning in result.warnings
