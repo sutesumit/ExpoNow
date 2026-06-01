@@ -1,5 +1,5 @@
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Sub-task 1: Time helpers
@@ -312,7 +312,9 @@ class ScheduleContractTests(unittest.TestCase):
         sr = ScheduleResult(
             feasible=True,
             scenario_id="test",
-            bus_plans=[BusPlan(bus_id="b1", operator="op", direction="A->B", events=[])],
+            bus_plans=[
+                BusPlan(bus_id="b1", operator="op", direction="A->B", events=[])
+            ],
             station_reservations=[
                 StationReservation(
                     station="A",
@@ -376,7 +378,9 @@ class ScenarioLoaderTests(unittest.TestCase):
         from src.adapters.scenario_loader import discover_scenario_ids
 
         ids = discover_scenario_ids()
-        self.assertEqual(ids, ["scenario_1", "scenario_2", "scenario_3", "scenario_4", "scenario_5"])
+        self.assertEqual(
+            ids, ["scenario_1", "scenario_2", "scenario_3", "scenario_4", "scenario_5"]
+        )
 
     def test_load_scenario_returns_domain_object_not_dict(self):
         from src.adapters.scenario_loader import load_scenario
@@ -458,7 +462,6 @@ class CatalogIntegrationTests(unittest.TestCase):
             [s.id for s in summaries],
             ["scenario_1", "scenario_2", "scenario_3", "scenario_4", "scenario_5"],
         )
-        self.assertFalse(any(s.is_placeholder for s in summaries))
 
     def test_build_view_model_uses_loaded_scenario(self):
         from src.app_view_model import build_initial_view_model
@@ -472,59 +475,6 @@ class CatalogIntegrationTests(unittest.TestCase):
         self.assertEqual(sb.components["individual_wait"]["weight"], 1.0)
         self.assertEqual(sb.components["operator_smoothness"]["weight"], 1.0)
         self.assertEqual(sb.components["overall_network"]["weight"], 1.0)
-
-
-# ---------------------------------------------------------------------------
-# Sub-task 8: Stub scheduler weight threading
-# ---------------------------------------------------------------------------
-
-
-class StubSchedulerTests(unittest.TestCase):
-    def test_stub_scheduler_accepts_scenario_not_summary(self):
-        from src.adapters.scenario_loader import load_scenario
-        from src.scheduler.stub import StubSchedulerStrategy
-
-        scenario = load_scenario("scenario_1")
-        result = StubSchedulerStrategy().schedule(scenario)
-        self.assertIsNotNone(result)
-
-    def test_stub_scheduler_threads_weights_to_score_breakdown(self):
-        from src.adapters.scenario_loader import load_scenario
-        from src.scheduler.stub import StubSchedulerStrategy
-
-        scenario = load_scenario("scenario_1")
-        result = StubSchedulerStrategy().schedule(scenario)
-        components = result.score_breakdown.components
-        self.assertIn("weights", components)
-        self.assertEqual(components["weights"]["individual"], 1.0)
-        self.assertEqual(components["weights"]["operator"], 1.0)
-        self.assertEqual(components["weights"]["overall"], 1.0)
-
-    def test_stub_scheduler_with_scenario_4_has_operator_weight_two(self):
-        from src.adapters.scenario_loader import load_scenario
-        from src.scheduler.stub import StubSchedulerStrategy
-
-        scenario = load_scenario("scenario_4")
-        result = StubSchedulerStrategy().schedule(scenario)
-        components = result.score_breakdown.components
-        self.assertEqual(components["weights"]["operator"], 2.0)
-
-    def test_stub_scheduler_result_is_still_feasible(self):
-        from src.adapters.scenario_loader import load_scenario
-        from src.scheduler.stub import StubSchedulerStrategy
-
-        scenario = load_scenario("scenario_1")
-        result = StubSchedulerStrategy().schedule(scenario)
-        self.assertTrue(result.feasible)
-
-    def test_scenario_weights_are_available_to_schedule_result(self):
-        from src.adapters.scenario_loader import load_scenario
-        from src.scheduler.stub import StubSchedulerStrategy
-
-        scenario = load_scenario("scenario_1")
-        result = StubSchedulerStrategy().schedule(scenario)
-        self.assertIsNotNone(result.score_breakdown)
-        self.assertIn("weights", result.score_breakdown.components)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,6 @@ def list_scenario_summaries() -> list[ScenarioSummary]:
                 id=scenario.id,
                 name=scenario.name,
                 description=scenario.description,
-                is_placeholder=False,
             )
         )
     return summaries

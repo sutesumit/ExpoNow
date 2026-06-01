@@ -8,7 +8,6 @@ from src.scheduler.contract import (
     StationReservation,
     TimelineEvent,
 )
-from src.scheduler.stub import StubSchedulerStrategy
 
 __all__ = [
     "BusPlan",
@@ -18,6 +17,5 @@ __all__ = [
     "SchedulerStrategy",
     "ScoreBreakdown",
     "StationReservation",
-    "StubSchedulerStrategy",
     "TimelineEvent",
 ]

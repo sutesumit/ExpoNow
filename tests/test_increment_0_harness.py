@@ -1,5 +1,5 @@
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 
 class IncrementZeroHarnessTests(unittest.TestCase):
@@ -23,24 +23,6 @@ class IncrementZeroHarnessTests(unittest.TestCase):
                 "Scenario 5 - Worst case convergence",
             ],
         )
-        self.assertFalse(any(summary.is_placeholder for summary in summaries))
-
-    def test_stub_scheduler_returns_schedule_result_contract(self):
-        from src.adapters.scenario_loader import load_scenario
-        from src.scheduler.contract import ScheduleMetrics, ScoreBreakdown
-        from src.scheduler.stub import StubSchedulerStrategy
-
-        scenario = load_scenario("scenario_1")
-        result = StubSchedulerStrategy().schedule(scenario)
-
-        self.assertTrue(result.feasible)
-        self.assertEqual(result.scenario_id, "scenario_1")
-        self.assertEqual(result.bus_plans, [])
-        self.assertEqual(result.station_reservations, [])
-        self.assertIsInstance(result.metrics, ScheduleMetrics)
-        self.assertEqual(result.metrics.total_buses, 20)
-        self.assertIsInstance(result.score_breakdown, ScoreBreakdown)
-        self.assertIn("weights", result.score_breakdown.components)
 
     def test_real_scheduler_returns_populated_schedule_result(self):
         from src.adapters.scenario_loader import load_scenario
