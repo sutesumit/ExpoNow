@@ -1,3 +1,5 @@
+from typing import Any
+
 from src.app_view_model import InitialViewModel
 from src.domain.scenario import ScenarioSummary
 from src.reporting import metrics as reporting_metrics
@@ -16,6 +18,19 @@ def render_scenario_selector(scenarios: list[ScenarioSummary]) -> str:
         "Scenario",
         scenario_ids,
         format_func=lambda scenario_id: scenario_names[scenario_id],
+    )
+
+
+def render_strategy_selector(strategy_options: list[Any]) -> str:
+    import streamlit as st
+
+    strategy_ids = [option.id for option in strategy_options]
+    strategy_labels = {option.id: option.label for option in strategy_options}
+
+    return st.selectbox(
+        "Solver Engine",
+        strategy_ids,
+        format_func=lambda strategy_id: strategy_labels[strategy_id],
     )
 
 

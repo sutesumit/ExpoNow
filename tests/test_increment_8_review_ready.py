@@ -102,12 +102,14 @@ class EdgeFixtureMultiOperatorTests(unittest.TestCase):
 
 
 class StaticGuardTests(unittest.TestCase):
-    def test_requirements_do_not_include_deferred_solver_dependencies(self):
+    def test_requirements_include_selected_solver_but_not_deferred_solver_dependencies(self):
         req_path = Path("requirements.txt")
         self.assertTrue(req_path.exists())
         content = req_path.read_text(encoding="utf-8")
 
-        solver_packages = ["ortools", "z3", "z3-solver", "pulp", "cvxopt", "scipy"]
+        self.assertIn("ortools", content.lower())
+
+        solver_packages = ["z3", "z3-solver", "pulp", "cvxopt", "scipy"]
         for pkg in solver_packages:
             self.assertNotIn(
                 pkg.lower(),
