@@ -22,6 +22,35 @@ python -m unittest
 python -m compileall app.py src
 ```
 
+## Project Structure
+
+```
+.
+├── app.py              # Streamlit UI entry point
+├── src/                # Python source root
+│   ├── domain/         # Stable domain models and helpers
+│   ├── adapters/       # Data loading, validation, errors
+│   ├── scheduler/      # Scheduling engine and constraints
+│   ├── reporting/      # Display transformation of results
+│   └── ui/             # Streamlit render helpers
+├── data/
+│   └── scenarios/      # Scenario definition files (JSON)
+│       ├── scenario_1.json
+│       ├── scenario_2.json
+│       ├── scenario_3.json
+│       ├── scenario_4.json
+│       └── scenario_5.json
+├── tests/              # Test suite (130+ tests)
+│   └── fixtures/       # Edge-case scenario fixtures
+├── README.md           # Project root README
+├── ARCHITECTURE.md     # Design decisions, data structures, extensibility
+└── docs/               # Decision log, implementation plans
+    ├── decision_log.md
+    ├── implementation_plan.md
+    ├── vertical_implementation_plan.md
+    └── ...
+```
+
 ## Deployment
 
 Deploy to [Streamlit Community Cloud](https://streamlit.io/cloud) by connecting your GitHub repository. The app is currently hosted at https://exponow.streamlit.app/.
@@ -39,9 +68,9 @@ The architecture is designed so that common future changes require data edits or
 | **Multiple chargers at a station** | Change `charger_count` in the station object. The `ReservationManager` already supports per-lane scheduling. |
 | **New operator** | Write the operator name in bus data. Operators are free-text strings. |
 | **New scoring rule** | Write one scoring function, register it in `SCORE_COMPONENTS`, add its weight to the scenario JSON. |
-| **New scheduling algorithm** | Create a class with a `schedule(scenario)` method in `strategies/`. Swap the import in `app_view_model.py`. |
-| **Variable battery range per bus** | Add `range_km` to the bus object in JSON; the scheduler reads per-bus range with a policy default fallback. |
-| **Different charge time per station** | Add `charge_minutes` to the station object in JSON; the scheduler uses it with a policy default fallback. |
+| **New scheduling algorithm** | Create a strategy class with `schedule(scenario)`, then register it in `src/scheduler/strategies/registry.py`. The solver selector reads registered available strategies. |
+| **Scenario battery range** | Change `charging_policy.range_km` in the scenario JSON. Per-bus range is not currently modeled. |
+| **Scenario charge time** | Change `charging_policy.full_charge_minutes` in the scenario JSON. Per-station charge duration is not currently modeled. |
 | **Replace Streamlit with CLI** | Rewrite `src/ui/` and `app.py`. Domain, adapters, scheduler, and reporting remain untouched. |
 
 ### Weight tuning (no code change)
@@ -65,12 +94,20 @@ Edit the `weights` object in any scenario JSON file under `data/scenarios/`. Wei
 3. Register the component in `SCORE_COMPONENTS` — the registry automatically includes new components in the total weighted score.
 4. Add the corresponding weight key to each scenario JSON (or use a default in `Weights`).
 
+### Adding a scheduler strategy
+
+1. Create a strategy class with `schedule(scenario) -> ScheduleResult`
+2. Register its option and factory in `src/scheduler/strategies/registry.py`
+3. Keep optional solver dependencies guarded so unavailable strategies are not shown in the Streamlit selector
+
+The app view model selects strategies through the registry, and the UI renders the available options as the "Solver Engine" selector.
+
 ## Documentation
 
-- `docs/ARCHITECTURE.md` — design decisions, data structures, scoring components, and extensibility guide
-- `docs/DECISION_LOG.md` — chronological decision tracking
-- `docs/VERTICAL_IMPLEMENTATION_PLAN.md` — scenario-first vertical build plan
+- `ARCHITECTURE.md` — design decisions, data structures, scoring components, and extensibility guide
+- `docs/decision_log.md` — chronological decision tracking
+- `docs/vertical_implementation_plan.md` — scenario-first vertical build plan
 
 ## Assumptions
 
-See `docs/ARCHITECTURE.md` for the full list of assumptions made during implementation.
+See `ARCHITECTURE.md` for the full list of assumptions made during implementation.

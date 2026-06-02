@@ -1,40 +1,7 @@
 from src.domain.models import Scenario
 from src.domain.route import total_distance
 from src.domain.time import format_minutes
-from src.scheduler.contract import ScheduleResult, StationReservation, BusPlan
-
-
-def build_route_diagram_dot(scenario: Scenario) -> str:
-    station_chargers = {s.id: s.charger_count for s in scenario.stations}
-    lines = ["digraph Route {"]
-    lines.append("  rankdir=LR;")
-    lines.append("  node [shape=box, style=filled, fillcolor=lightyellow];")
-    lines.append(
-        '  "Bengaluru" [fillcolor=lightgreen, shape=ellipse, fontcolor=darkgreen];'
-    )
-    lines.append(
-        '  "Kochi" [fillcolor=lightgreen, shape=ellipse, fontcolor=darkgreen];'
-    )
-
-    def dot_escape(v: str) -> str:
-        return v.replace('"', '\\"')
-
-    for stop in scenario.route.stops:
-        if stop in station_chargers:
-            count = station_chargers[stop]
-            safe_stop = dot_escape(stop)
-            label = f"{safe_stop}\\n{count} charger{'s' if count != 1 else ''}"
-            lines.append(f'  "{safe_stop}" [label="{label}"];')
-
-    for seg in scenario.route.segments:
-        safe_from = dot_escape(seg.from_stop)
-        safe_to = dot_escape(seg.to_stop)
-        lines.append(
-            f'  "{safe_from}" -> "{safe_to}" [label="{seg.distance_km} km"];'
-        )
-
-    lines.append("}")
-    return "\n".join(lines)
+from src.scheduler.contract import BusPlan, ScheduleResult, StationReservation
 
 
 def build_summary_rows(scenario: Scenario) -> list[dict]:
@@ -129,25 +96,35 @@ def build_bus_timetable_rows(result: ScheduleResult) -> list[dict]:
                 charge_end = _find_charge_end_minutes(plan, station)
                 res = reservation_lookup.get((plan.bus_id, station))
 
-                rows.append({
-                    "Bus ID": plan.bus_id,
-                    "Operator": plan.operator,
-                    "Direction": plan.direction,
-                    "Departure": format_minutes(departure_minutes),
-                    "Station": station,
-                    "Arrival": format_minutes(arrival) if arrival is not None else "",
-                    "Wait (min)": wait,
-                    "Charge Start": format_minutes(event.minutes),
-                    "Charge End": format_minutes(charge_end) if charge_end is not None else "",
-                    "Charger Lane": res.charger_lane if res else "",
-                    "Final Arrival": format_minutes(plan.final_arrival_minutes) if plan.final_arrival_minutes is not None else "",
-                })
+                rows.append(
+                    {
+                        "Bus ID": plan.bus_id,
+                        "Operator": plan.operator,
+                        "Direction": plan.direction,
+                        "Departure": format_minutes(departure_minutes),
+                        "Station": station,
+                        "Arrival": format_minutes(arrival)
+                        if arrival is not None
+                        else "",
+                        "Wait (min)": wait,
+                        "Charge Start": format_minutes(event.minutes),
+                        "Charge End": format_minutes(charge_end)
+                        if charge_end is not None
+                        else "",
+                        "Charger Lane": res.charger_lane if res else "",
+                        "Final Arrival": format_minutes(plan.final_arrival_minutes)
+                        if plan.final_arrival_minutes is not None
+                        else "",
+                    }
+                )
 
     return sorted(rows, key=lambda r: (r["Departure"], r["Bus ID"]))
 
 
 def build_station_queue_rows(result: ScheduleResult) -> dict[str, list[dict]]:
-    bus_plan_lookup: dict[str, BusPlan] = {plan.bus_id: plan for plan in result.bus_plans}
+    bus_plan_lookup: dict[str, BusPlan] = {
+        plan.bus_id: plan for plan in result.bus_plans
+    }
 
     station_rows: dict[str, list[dict]] = {}
     for res in result.station_reservations:
@@ -158,16 +135,20 @@ def build_station_queue_rows(result: ScheduleResult) -> dict[str, list[dict]]:
         if res.station not in station_rows:
             station_rows[res.station] = []
 
-        station_rows[res.station].append({
-            "Bus ID": res.bus_id,
-            "Operator": plan.operator if plan else "",
-            "Direction": plan.direction if plan else "",
-            "Arrival": format_minutes(arrival_minutes) if arrival_minutes is not None else "",
-            "Charge Start": format_minutes(res.start_minutes),
-            "Charge End": format_minutes(res.end_minutes),
-            "Wait (min)": wait,
-            "Charger Lane": res.charger_lane,
-        })
+        station_rows[res.station].append(
+            {
+                "Bus ID": res.bus_id,
+                "Operator": plan.operator if plan else "",
+                "Direction": plan.direction if plan else "",
+                "Arrival": format_minutes(arrival_minutes)
+                if arrival_minutes is not None
+                else "",
+                "Charge Start": format_minutes(res.start_minutes),
+                "Charge End": format_minutes(res.end_minutes),
+                "Wait (min)": wait,
+                "Charger Lane": res.charger_lane,
+            }
+        )
 
     for station_id in station_rows:
         station_rows[station_id].sort(

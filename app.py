@@ -27,7 +27,12 @@ def main() -> None:
     strategy_options = list_strategy_options()
     selected_scenario_id = render_scenario_selector(scenarios)
     selected_strategy_id = render_strategy_selector(strategy_options)
-    view_model = _get_cached_view_model(selected_scenario_id, selected_strategy_id)
+    with st.spinner("Solving... (up to 60s)"):
+        view_model = _get_cached_view_model(selected_scenario_id, selected_strategy_id)
+
+    diag = view_model.schedule_result.solver_diagnostics
+    if diag is not None:
+        st.caption(f"⏱ Solver took {diag.wall_time_seconds:.1f}s ({diag.solver_name})")
 
     render_input_view(view_model)
 

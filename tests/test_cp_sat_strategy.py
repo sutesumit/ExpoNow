@@ -29,6 +29,35 @@ class CpSatStrategyTests(unittest.TestCase):
         self.assertTrue(result.feasible, result.warnings)
         self.assertEqual(violations, [])
 
+    def test_feasible_result_includes_solver_diagnostics_and_hint_usage(self):
+        from src.scheduler.constraints import validate_schedule_invariants
+        from src.scheduler.strategies.cp_sat_strategy import (
+            CP_SAT_TIME_LIMIT_SECONDS,
+            CpSatStrategy,
+        )
+
+        scenario = _load_fixture_scenario("scenario_multi_charger")
+        result = CpSatStrategy().schedule(scenario)
+        violations = validate_schedule_invariants(scenario, result)
+
+        self.assertTrue(result.feasible, result.warnings)
+        self.assertEqual(violations, [])
+        self.assertIsNotNone(result.solver_diagnostics)
+        diagnostics = result.solver_diagnostics
+        self.assertEqual(diagnostics.solver_name, "CP-SAT")
+        self.assertIn(diagnostics.status_name, {"OPTIMAL", "FEASIBLE"})
+        self.assertIsNotNone(diagnostics.objective_value)
+        self.assertIsNotNone(diagnostics.best_objective_bound)
+        self.assertIsNotNone(diagnostics.optimality_gap)
+        self.assertGreaterEqual(diagnostics.wall_time_seconds, 0.0)
+        self.assertGreaterEqual(diagnostics.conflict_count, 0)
+        self.assertGreaterEqual(diagnostics.branch_count, 0)
+        self.assertEqual(diagnostics.search_workers, 1)
+        self.assertEqual(diagnostics.time_limit_seconds, CP_SAT_TIME_LIMIT_SECONDS)
+        self.assertTrue(diagnostics.used_heuristic_hint)
+        self.assertIsNotNone(diagnostics.heuristic_objective_value)
+        self.assertIsNotNone(diagnostics.objective_improvement)
+
     def test_impossible_range_fixture_is_infeasible(self):
         from src.scheduler.strategies.cp_sat_strategy import CpSatStrategy
 

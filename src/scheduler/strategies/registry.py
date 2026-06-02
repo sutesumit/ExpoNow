@@ -5,7 +5,6 @@ from src.scheduler.contract import SchedulerStrategy
 from src.scheduler.strategies.cp_sat_strategy import CpSatStrategy, is_ortools_available
 from src.scheduler.strategies.custom_heuristic import CustomHeuristicStrategy
 
-
 DEFAULT_STRATEGY_ID = "custom_heuristic"
 
 
@@ -37,9 +36,9 @@ def _custom_heuristic_option() -> StrategyOption:
 def _cp_sat_option() -> StrategyOption:
     return StrategyOption(
         id="cp_sat",
-        label="OR-Tools CP-SAT (experimental)",
-        description="Optional global optimizer using OR-Tools CP-SAT when installed.",
-        is_experimental=True,
+        label="OR-Tools CP-SAT (heuristic warm start)",
+        description="Global optimizer using OR-Tools CP-SAT, warm-started from the custom heuristic solution.",
+        is_experimental=False,
         is_available=is_ortools_available(),
     )
 

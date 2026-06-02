@@ -32,12 +32,21 @@ def _make_simple_result() -> ScheduleResult:
     ]
     bus_plans = [
         BusPlan(
-            bus_id="bus-1", operator="op_a", direction="X->Y",
-            events=events, final_arrival_minutes=105,
+            bus_id="bus-1",
+            operator="op_a",
+            direction="X->Y",
+            events=events,
+            final_arrival_minutes=105,
         ),
     ]
     reservations = [
-        StationReservation(station="A", bus_id="bus-1", charger_lane=0, start_minutes=40, end_minutes=65),
+        StationReservation(
+            station="A",
+            bus_id="bus-1",
+            charger_lane=0,
+            start_minutes=40,
+            end_minutes=65,
+        ),
     ]
     return ScheduleResult(
         feasible=True,
@@ -45,17 +54,25 @@ def _make_simple_result() -> ScheduleResult:
         bus_plans=bus_plans,
         station_reservations=reservations,
         metrics=ScheduleMetrics(
-            total_buses=1, total_charge_stops=1,
-            total_wait_minutes=10, max_wait_minutes=10,
+            total_buses=1,
+            total_charge_stops=1,
+            total_wait_minutes=10,
+            max_wait_minutes=10,
         ),
     )
 
 
 def _make_simple_scenario(weights: Weights) -> Scenario:
     return Scenario(
-        schema_version=1, id="test", name="test", description="",
-        route=None, stations=[], buses=[],
-        charging_policy=None, travel_policy=None,
+        schema_version=1,
+        id="test",
+        name="test",
+        description="",
+        route=None,
+        stations=[],
+        buses=[],
+        charging_policy=None,
+        travel_policy=None,
         weights=weights,
     )
 
@@ -100,14 +117,18 @@ class MultiChargerReservationTests(unittest.TestCase):
         self.assertIsNotNone(slot1)
         self.assertIsNotNone(slot2)
         self.assertNotEqual(
-            slot1.lane, slot2.lane,
+            slot1.lane,
+            slot2.lane,
             "Two overlapping requests at B with 2 chargers should use different lanes",
         )
 
 
 class MultiChargerReportingTests(unittest.TestCase):
     def test_reporting_includes_charger_lane_for_multi_charger_fixture(self):
-        from src.reporting.tables import build_bus_timetable_rows, build_station_queue_rows
+        from src.reporting.tables import (
+            build_bus_timetable_rows,
+            build_station_queue_rows,
+        )
         from src.scheduler.strategies.custom_heuristic import CustomHeuristicStrategy
 
         scenario = _load_fixture_scenario("scenario_multi_charger")
@@ -139,7 +160,7 @@ class NewOperatorTests(unittest.TestCase):
 
 class DocsCoverageTests(unittest.TestCase):
     def test_docs_explain_weight_change_and_new_rule_extension(self):
-        arch = Path("docs/ARCHITECTURE.md").read_text(encoding="utf-8")
+        arch = Path("ARCHITECTURE.md").read_text(encoding="utf-8")
 
         self.assertIn("Changing a Weight", arch)
         self.assertIn("weights", arch.lower())

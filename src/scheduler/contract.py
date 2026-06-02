@@ -55,6 +55,23 @@ class ScoreBreakdown:
 
 
 @dataclass(frozen=True)
+class SolverDiagnostics:
+    solver_name: str
+    status_name: str
+    objective_value: float | None
+    best_objective_bound: float | None
+    optimality_gap: float | None
+    wall_time_seconds: float
+    conflict_count: int
+    branch_count: int
+    search_workers: int
+    time_limit_seconds: float
+    used_heuristic_hint: bool
+    heuristic_objective_value: float | None
+    objective_improvement: float | None
+
+
+@dataclass(frozen=True)
 class ScheduleResult:
     feasible: bool
     scenario_id: str
@@ -63,6 +80,7 @@ class ScheduleResult:
     metrics: ScheduleMetrics | None = None
     warnings: list[str] = field(default_factory=list)
     score_breakdown: ScoreBreakdown | None = None
+    solver_diagnostics: SolverDiagnostics | None = None
 
 
 class SchedulerStrategy(Protocol):

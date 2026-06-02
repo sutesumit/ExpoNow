@@ -4,6 +4,7 @@ from src.scheduler.contract import (
     BusPlan,
     ScheduleMetrics,
     ScheduleResult,
+    SolverDiagnostics,
     StationReservation,
 )
 from src.scheduler.scoring import compute_score_breakdown
@@ -43,6 +44,7 @@ def finalize_schedule_result(
     station_reservations: list[StationReservation],
     warnings: list[str] | None = None,
     feasible: bool = True,
+    solver_diagnostics: SolverDiagnostics | None = None,
 ) -> ScheduleResult:
     final_warnings = list(warnings or [])
     metrics = compute_schedule_metrics(scenario, bus_plans, station_reservations)
@@ -53,6 +55,7 @@ def finalize_schedule_result(
         station_reservations=station_reservations,
         metrics=metrics,
         warnings=final_warnings,
+        solver_diagnostics=solver_diagnostics,
     )
     score_breakdown = compute_score_breakdown(result, scenario)
     result = ScheduleResult(
@@ -63,6 +66,7 @@ def finalize_schedule_result(
         metrics=result.metrics,
         warnings=result.warnings,
         score_breakdown=score_breakdown,
+        solver_diagnostics=result.solver_diagnostics,
     )
 
     if not result.feasible:
@@ -80,6 +84,7 @@ def finalize_schedule_result(
         metrics=result.metrics,
         warnings=result.warnings + violations,
         score_breakdown=result.score_breakdown,
+        solver_diagnostics=result.solver_diagnostics,
     )
 
 

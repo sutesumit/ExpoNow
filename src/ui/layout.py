@@ -48,6 +48,9 @@ def render_input_view(view_model: InitialViewModel) -> None:
     ui.render_schedule_metrics(
         reporting_metrics.build_summary_metrics(view_model.schedule_result)
     )
+    ui.render_solver_diagnostics(
+        reporting_metrics.build_solver_diagnostic_rows(view_model.schedule_result)
+    )
 
     if (
         view_model.schedule_result.score_breakdown
@@ -60,7 +63,6 @@ def render_input_view(view_model: InitialViewModel) -> None:
         )
 
     with st.expander("Scenario Details", expanded=False):
-        ui.render_route_diagram(reporting.build_route_diagram_dot(scenario))
         ui.render_policy_legend(reporting.build_policy_rows(scenario))
 
         col_a, col_b = st.columns(2)

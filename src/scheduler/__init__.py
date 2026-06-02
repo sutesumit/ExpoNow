@@ -5,6 +5,7 @@ from src.scheduler.contract import (
     ScheduleResult,
     SchedulerStrategy,
     ScoreBreakdown,
+    SolverDiagnostics,
     StationReservation,
     TimelineEvent,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "ScheduleResult",
     "SchedulerStrategy",
     "ScoreBreakdown",
+    "SolverDiagnostics",
     "StationReservation",
     "TimelineEvent",
 ]

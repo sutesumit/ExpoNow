@@ -5,9 +5,10 @@ from typing import Any
 from src.domain.models import Scenario
 from src.domain.route import distance_between, get_ordered_stops, total_distance
 from src.scheduler.candidates import generate_candidates
-from src.scheduler.contract import ScheduleResult, StationReservation
+from src.scheduler.contract import ScheduleResult, SolverDiagnostics, StationReservation
 from src.scheduler.reservations import LaneSlot
 from src.scheduler.results import finalize_schedule_result
+from src.scheduler.strategies.custom_heuristic import CustomHeuristicStrategy
 from src.scheduler.timeline import build_bus_timeline, compute_travel_minutes
 
 CP_SAT_TIME_LIMIT_SECONDS = 60.0
@@ -36,6 +37,19 @@ class _BusDecision:
     origin: str
     destination: str
     candidates: list[_CandidateDecision]
+
+
+@dataclass(frozen=True)
+class _HeuristicStopHint:
+    station_id: str
+    start_minutes: int
+    charger_lane: int
+
+
+@dataclass(frozen=True)
+class _HeuristicBusHint:
+    candidate: tuple[str, ...]
+    stops: list[_HeuristicStopHint]
 
 
 def is_ortools_available() -> bool:
@@ -192,17 +206,36 @@ def _schedule_with_cp_sat(scenario: Scenario, cp_model) -> ScheduleResult:
         + _scaled_weight(scenario.weights.overall) * sum(journey_terms)
     )
 
+    heuristic_result = CustomHeuristicStrategy().schedule(scenario)
+    heuristic_objective = _compute_result_objective(scenario, heuristic_result)
+    heuristic_hints, hint_warnings = _build_heuristic_hints(
+        heuristic_result,
+        bus_decisions,
+    )
+    used_heuristic_hint = False
+    if heuristic_hints is not None:
+        _add_heuristic_hints(model, bus_decisions, heuristic_hints)
+        used_heuristic_hint = True
+
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = CP_SAT_TIME_LIMIT_SECONDS
     solver.parameters.num_search_workers = 1
     status = solver.Solve(model)
-    warnings = _warnings_for_status(status, cp_model)
+    diagnostics = _build_solver_diagnostics(
+        solver,
+        status,
+        cp_model,
+        used_heuristic_hint,
+        heuristic_objective,
+    )
+    warnings = hint_warnings + _warnings_for_status(status, cp_model)
 
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         return ScheduleResult(
             feasible=False,
             scenario_id=scenario.id,
             warnings=warnings,
+            solver_diagnostics=diagnostics,
         )
 
     bus_plans, reservations = _decode_solution(
@@ -218,6 +251,148 @@ def _schedule_with_cp_sat(scenario: Scenario, cp_model) -> ScheduleResult:
         reservations,
         warnings=warnings,
         feasible=True,
+        solver_diagnostics=diagnostics,
+    )
+
+
+def _build_heuristic_hints(
+    heuristic_result: ScheduleResult,
+    bus_decisions: list[_BusDecision],
+) -> tuple[dict[str, _HeuristicBusHint] | None, list[str]]:
+    if not heuristic_result.feasible:
+        return None, [
+            "CP-SAT skipped heuristic hint because the custom heuristic did not produce a feasible schedule."
+        ]
+
+    plans_by_bus = {plan.bus_id: plan for plan in heuristic_result.bus_plans}
+    reservations_by_bus_station = {
+        (reservation.bus_id, reservation.station): reservation
+        for reservation in heuristic_result.station_reservations
+    }
+    hints: dict[str, _HeuristicBusHint] = {}
+
+    for bus_decision in bus_decisions:
+        plan = plans_by_bus.get(bus_decision.bus.id)
+        if plan is None:
+            return None, [
+                f"CP-SAT skipped heuristic hint because {bus_decision.bus.id} has no heuristic bus plan."
+            ]
+
+        candidate = tuple(
+            event.location
+            for event in plan.events
+            if event.event_type == "charge_start"
+        )
+        if candidate not in {
+            candidate_decision.candidate
+            for candidate_decision in bus_decision.candidates
+        }:
+            return None, [
+                "CP-SAT skipped heuristic hint because the heuristic station sequence "
+                f"for {bus_decision.bus.id} does not match a CP-SAT candidate."
+            ]
+
+        stop_hints: list[_HeuristicStopHint] = []
+        for station_id in candidate:
+            reservation = reservations_by_bus_station.get(
+                (bus_decision.bus.id, station_id)
+            )
+            if reservation is None:
+                return None, [
+                    "CP-SAT skipped heuristic hint because the heuristic reservation "
+                    f"for {bus_decision.bus.id} at {station_id} is missing."
+                ]
+            stop_hints.append(
+                _HeuristicStopHint(
+                    station_id=station_id,
+                    start_minutes=reservation.start_minutes,
+                    charger_lane=reservation.charger_lane,
+                )
+            )
+
+        hints[bus_decision.bus.id] = _HeuristicBusHint(
+            candidate=candidate,
+            stops=stop_hints,
+        )
+
+    return hints, []
+
+
+def _add_heuristic_hints(
+    model,
+    bus_decisions: list[_BusDecision],
+    hints: dict[str, _HeuristicBusHint],
+) -> None:
+    for bus_decision in bus_decisions:
+        hint = hints[bus_decision.bus.id]
+        for candidate_decision in bus_decision.candidates:
+            candidate_selected = candidate_decision.candidate == hint.candidate
+            model.AddHint(candidate_decision.selected, int(candidate_selected))
+            if not candidate_selected:
+                continue
+
+            for stop_decision, stop_hint in zip(candidate_decision.stops, hint.stops):
+                model.AddHint(stop_decision.start, stop_hint.start_minutes)
+                for lane, lane_selected in enumerate(stop_decision.lane_selectors):
+                    model.AddHint(lane_selected, int(lane == stop_hint.charger_lane))
+
+
+def _compute_result_objective(
+    scenario: Scenario,
+    result: ScheduleResult,
+) -> float | None:
+    if not result.feasible or result.metrics is None:
+        return None
+
+    buses_by_id = {bus.id: bus for bus in scenario.buses}
+    total_journey_minutes = 0
+    for plan in result.bus_plans:
+        bus = buses_by_id.get(plan.bus_id)
+        if bus is None or plan.final_arrival_minutes is None:
+            return None
+        total_journey_minutes += plan.final_arrival_minutes - bus.departure_minutes
+
+    return float(
+        _scaled_weight(scenario.weights.individual) * result.metrics.total_wait_minutes
+        + _scaled_weight(scenario.weights.overall) * total_journey_minutes
+    )
+
+
+def _build_solver_diagnostics(
+    solver,
+    status: int,
+    cp_model,
+    used_heuristic_hint: bool,
+    heuristic_objective: float | None,
+) -> SolverDiagnostics:
+    objective_value = None
+    best_objective_bound = None
+    optimality_gap = None
+    objective_improvement = None
+
+    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        objective_value = float(solver.ObjectiveValue())
+        best_objective_bound = float(solver.BestObjectiveBound())
+        optimality_gap = objective_value - best_objective_bound
+        if heuristic_objective is not None:
+            objective_improvement = heuristic_objective - objective_value
+    else:
+        best_objective_bound = float(solver.BestObjectiveBound())
+
+    return SolverDiagnostics(
+        solver_name="CP-SAT",
+        status_name=solver.StatusName(status),
+        objective_value=objective_value,
+        best_objective_bound=best_objective_bound,
+        optimality_gap=optimality_gap,
+        wall_time_seconds=float(solver.WallTime()),
+        conflict_count=int(solver.NumConflicts()),
+        branch_count=int(solver.NumBranches()),
+        search_workers=1,
+        time_limit_seconds=CP_SAT_TIME_LIMIT_SECONDS,
+        used_heuristic_hint=used_heuristic_hint,
+        heuristic_objective_value=heuristic_objective,
+        objective_improvement=objective_improvement,
     )
 
 
@@ -351,7 +526,8 @@ def _warnings_for_status(status: int, cp_model) -> list[str]:
         return []
     if status == cp_model.FEASIBLE:
         return [
-            "CP-SAT found a feasible solution but did not prove optimality within 10.0 seconds."
+            "CP-SAT found a feasible solution but did not prove optimality "
+            f"within {CP_SAT_TIME_LIMIT_SECONDS:.1f} seconds."
         ]
     if status == cp_model.INFEASIBLE:
         return ["CP-SAT proved the scenario infeasible."]
