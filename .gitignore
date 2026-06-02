@@ -8,5 +8,4 @@ venv/
 dist/
 build/
 .streamlit/
-docs/
 .kilo/

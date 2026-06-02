@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ExpoNow Test Infrastructure</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1e2730;
+      --muted: #596672;
+      --line: #c9d3dc;
+      --paper: #f6f4ee;
+      --surface: #ffffff;
+      --accent: #215f7a;
+      --accent-2: #2f7d5a;
+      --accent-3: #8a5d17;
+      --accent-4: #8e4d6d;
+      --soft-1: #eaf3f7;
+      --soft-2: #e7f3ed;
+      --soft-3: #f4ecd9;
+      --soft-4: #f4e6ee;
+      --shadow: 0 2px 10px rgba(30, 39, 48, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      max-width: 980px;
+      font-weight: 780;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      margin-top: 56px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 1.02rem;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    p, li { color: var(--ink); }
+
+    .lede {
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      margin-top: 12px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin: 20px 0;
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f8fafb;
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.9em;
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px 6px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    .callout pre {
+      background: var(--soft-3);
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    .flowchart {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fbfcfd;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+    }
+
+    .panel h3 {
+      margin-top: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid transparent;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .b-blue { background: var(--soft-1); color: var(--accent); border-color: #b7d4e1; }
+    .b-green { background: var(--soft-2); color: var(--accent-2); border-color: #b5d6c4; }
+    .b-amber { background: var(--soft-3); color: var(--accent-3); border-color: #d8c59b; }
+    .b-rose { background: var(--soft-4); color: var(--accent-4); border-color: #d6b2c4; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+      margin-bottom: 24px;
+    }
+
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+    }
+
+    nav li {
+      margin: 0;
+    }
+
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.92rem;
+      white-space: nowrap;
+    }
+
+    nav a:hover { text-decoration: underline; }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 18px;
+    }
+
+    .table-wrap table {
+      margin-top: 0;
+    }
+
+    .pyramid {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 4px;
+      margin: 20px 0;
+      padding: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .pyramid-layer {
+      text-align: center;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      margin: 0 auto;
+      font-size: 0.92rem;
+    }
+
+    .pyramid-layer strong {
+      display: block;
+    }
+
+    .pl-top {
+      background: var(--soft-1);
+      border: 1px solid #b7d4e1;
+      color: var(--accent);
+    }
+
+    .pl-mid {
+      background: var(--soft-2);
+      border: 1px solid #b5d6c4;
+      color: var(--accent-2);
+    }
+
+    .pl-base {
+      background: var(--soft-4);
+      border: 1px solid #d6b2c4;
+      color: var(--accent-4);
+    }
+
+    .arch-flow {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .arch-row {
+      display: grid;
+      grid-template-columns: auto 24px 1fr;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .arch-box {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.92rem;
+      background: #fbfcfd;
+    }
+
+    .arch-box.test-highlight {
+      background: var(--soft-3);
+      border-color: #d8c59b;
+    }
+
+    .arch-arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .arch-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    ul { margin: 10px 0 0 20px; }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      main { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav>
+      <ul>
+        <li><a href="#lede">Overview</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#pyramid">Test Pyramid</a></li>
+        <li><a href="#increments">Increments</a></li>
+        <li><a href="#focused">Focused Modules</a></li>
+        <li><a href="#fixtures">Fixtures &amp; Data</a></li>
+        <li><a href="#patterns">Patterns</a></li>
+        <li><a href="#invoking">Invoking</a></li>
+        <li><a href="#gaps">Gap Analysis</a></li>
+        <li><a href="#mapping">Source-Test Mapping</a></li>
+      </ul>
+    </nav>
+
+    <header id="lede">
+      <h1>ExpoNow Test Infrastructure</h1>
+      <p class="lede">
+        A complete digest of what we verify, how, and why. 15 test files covering 11 source
+        modules with 6 fixtures and 5 assignment scenarios. All tests run via
+        <code>python -m unittest discover</code> &mdash; no pytest, no CI/CD, no coverage tooling.
+        Python 3.11 (<code>runtime.txt</code>). OR-Tools is optional; CP-SAT tests skip gracefully.
+      </p>
+    </header>
+
+    <!-- ====== Section 2: Architecture Dependency Flowchart ====== -->
+    <section id="architecture">
+      <h2>Architecture Dependency Flowchart</h2>
+      <p class="subtle">
+        The layers and data flow of the ExpoNow scheduler. Test files are annotated in
+        <span class="badge b-amber">amber</span> showing what each layer covers.
+      </p>
+
+      <div class="arch-flow">
+        <div class="arch-row">
+          <div class="arch-box"><strong>Streamlit UI</strong><br><span class="subtle">src/ui/</span></div>
+          <div class="arch-arrow">&rarr;</div>
+          <div class="arch-box test-highlight"><strong>View Model</strong><br><span class="subtle">src/app_view_model.py</span><br><span class="arch-label">test_increment_0, test_strategy_registry</span></div>
+        </div>
+        <div class="arch-row">
+          <div class="arch-box" style="grid-column: 1; grid-row: 1;">
+            <strong>Streamlit UI</strong><br><span class="subtle">src/ui/</span>
+          </div>
+          <div class="arch-arrow">&rarr;</div>
+          <div class="arch-box test-highlight" style="grid-column: 3;">
+            <strong>Scheduler Layer</strong><br>
+            <span class="subtle">src/scheduler/</span><br>
+            <span class="arch-label">test_scheduler_engine, test_scheduler_invariants, test_candidates, test_constraints, test_scoring, test_solver_diagnostics, test_cp_sat_strategy, test_strategy_registry</span>
+          </div>
+        </div>
+        <div class="arch-row">
+          <div class="arch-box" style="grid-column: 1;">
+            <strong>Streamlit UI</strong><br><span class="subtle">src/ui/</span>
+          </div>
+          <div class="arch-arrow">&rarr;</div>
+          <div class="arch-box test-highlight" style="grid-column: 3;">
+            <strong>Domain + Adapters + Reporting</strong><br>
+            <span class="subtle">src/domain/ src/adapters/ src/reporting/</span><br>
+            <span class="arch-label">test_increment_2, test_increment_3, test_increment_5, test_increment_1</span>
+          </div>
+        </div>
+        <div class="arch-row">
+          <div class="arch-box" style="grid-column: 1;">
+            <strong>Streamlit UI</strong><br><span class="subtle">src/ui/</span>
+          </div>
+          <div class="arch-arrow">&darr;</div>
+          <div class="arch-box" style="grid-column: 3;">
+            <strong>Data Layer (JSON files)</strong><br>
+            <span class="subtle">data/scenarios/ tests/fixtures/</span><br>
+            <span class="arch-label">test_increment_1 (static audit), fixture-powered tests</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Architecture rule</strong>
+        The scheduler and reporting packages must never import Streamlit. Architecture boundary
+        guards in <code>test_increment_0</code> and <code>test_increment_3</code>
+        assert <code>assertNotIn("import streamlit", source)</code> across
+        <code>src/scheduler/</code> and <code>src/reporting/</code>.
+        The UI layer (<code>src/ui/</code>) may only import <code>src.scheduler.contract</code>,
+        not scheduler internals &mdash; enforced by <code>test_increment_5</code> via AST inspection.
+      </div>
+    </section>
+
+    <!-- ====== Section 3: The Test Pyramid ====== -->
+    <section id="pyramid">
+      <h2>Test Pyramid</h2>
+      <p class="subtle">
+        Three-tier strategy: broad end-to-end coverage at the top, integration in the middle,
+        focused unit tests at the base.
+      </p>
+
+      <div class="pyramid">
+        <div class="pyramid-layer pl-top" style="width: 55%">
+          <strong>End-to-End (7 files)</strong>
+          Full pipeline: load &rarr; schedule &rarr; validate invariants
+        </div>
+        <div class="pyramid-layer pl-mid" style="width: 72%">
+          <strong>Integration (4 files)</strong>
+          Adapter loading, domain construction, validator rules, reporting tables
+        </div>
+        <div class="pyramid-layer pl-base" style="width: 90%">
+          <strong>Unit (~4 files)</strong>
+          Domain models, time/route helpers, candidate generation, range math, reservation manager
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Layer</th>
+              <th>Files</th>
+              <th>Count</th>
+              <th>Examples</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge b-rose">E2E</span></td>
+              <td>Full pipeline</td>
+              <td><code>test_scheduler_engine.py</code>, <code>test_scheduler_invariants.py</code>, <code>test_increment_8_review_ready.py</code>, <code>test_cp_sat_strategy.py</code>, <code>test_strategy_registry.py</code>, <code>test_increment_0_harness.py</code>, <code>test_extensibility.py</code></td>
+              <td>7</td>
+              <td><code>load_scenario &rarr; schedule &rarr; validate_invariants</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-green">Integration</span></td>
+              <td>Adapters + domain + reporting</td>
+              <td><code>test_increment_2_domain_and_loader.py</code>, <code>test_increment_3_validation_and_input_rendering.py</code>, <code>test_solver_diagnostics.py</code>, <code>test_increment_5_timetable_and_queues.py</code></td>
+              <td>4</td>
+              <td><code>load_scenario("scenario_1")</code> returns <code>Scenario</code> not dict; <code>validate_scenario</code> rejects dupes; timetable rows sorted by departure</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-blue">Unit</span></td>
+              <td>Models, helpers, algorithms</td>
+              <td><code>test_scoring.py</code>, <code>test_candidates.py</code>, <code>test_constraints.py</code>, <code>test_increment_1_scenario_data.py</code></td>
+              <td>~4</td>
+              <td>Validating frozen dataclasses, time parsing, candidate generation, range constraint math</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Section 4: Increment Test Files ====== -->
+    <section id="increments">
+      <h2>Increment Test Files (Vertical Slice History)</h2>
+      <p class="subtle">
+        Six increment files track how the test base grew with each feature slice.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Increment</th>
+              <th>Focus</th>
+              <th>Source Under Test</th>
+              <th>Key Pattern</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>test_increment_0_harness.py</code></td>
+              <td>0 - Harness</td>
+              <td>Smoke tests, Streamlit isolation, orchestration</td>
+              <td><code>scenario_catalog</code>, <code>app_view_model</code>, <code>CustomHeuristicStrategy</code></td>
+              <td>Smoke + architecture guard</td>
+            </tr>
+            <tr>
+              <td><code>test_increment_1_scenario_data.py</code></td>
+              <td>1 - Scenario Data</td>
+              <td>JSON file existence, schema keys, bus counts, time windows</td>
+              <td><code>data/scenarios/*.json</code></td>
+              <td>Static data audit</td>
+            </tr>
+            <tr>
+              <td><code>test_increment_2_domain_and_loader.py</code></td>
+              <td>2 - Domain &amp; Loader</td>
+              <td>Time helpers, route helpers, domain models frozen, ScheduleResult typed, adapter errors, scenario loading</td>
+              <td><code>domain/time</code>, <code>domain/route</code>, <code>domain/models</code>, <code>scheduler/contract</code>, <code>adapters/errors</code>, <code>adapters/scenario_loader</code></td>
+              <td>Pure contract + round-trip</td>
+            </tr>
+            <tr>
+              <td><code>test_increment_3_validation_and_input_rendering.py</code></td>
+              <td>3 - Validation &amp; Input Rendering</td>
+              <td>Scenario validation rules, reporting tables, architecture boundaries</td>
+              <td><code>adapters/scenario_validator</code>, <code>reporting/tables</code></td>
+              <td>Negative testing + row shape</td>
+            </tr>
+            <tr>
+              <td><code>test_increment_5_timetable_and_queues.py</code></td>
+              <td>5 - Timetable &amp; Queues</td>
+              <td>Bus timetable rows sorted by departure, station queues interleave directions, infeasible graceful</td>
+              <td><code>reporting/tables</code>, <code>reporting/metrics</code></td>
+              <td>Row content + sort + edge</td>
+            </tr>
+            <tr>
+              <td><code>test_increment_8_review_ready.py</code></td>
+              <td>8 - Review Ready</td>
+              <td>Edge fixture feasibility, impossible range, simultaneous arrivals, multi-operator, static guards (requirements.txt, docs TBD)</td>
+              <td><code>scheduler/constraints</code>, <code>CustomHeuristicStrategy</code>, requirements.txt, docs/*.md</td>
+              <td>Fixture-powered + static audit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Section 5: Focused Test Modules ====== -->
+    <section id="focused">
+      <h2>Focused Test Modules (by Concern)</h2>
+      <p class="subtle">
+        Nine standalone test files that target specific concerns outside the increment structure.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Concern</th>
+              <th>Tests</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>test_candidates.py</code></td>
+              <td>Candidate generation</td>
+              <td>Route-order filtering, range boundary, uniqueness, count bounds</td>
+            </tr>
+            <tr>
+              <td><code>test_constraints.py</code></td>
+              <td>Range/route/reservation constraints</td>
+              <td><code>check_range_constraints</code>, <code>check_route_order</code>, <code>validate_schedule_invariants</code>, <code>ReservationManager</code></td>
+            </tr>
+            <tr>
+              <td><code>test_cp_sat_strategy.py</code></td>
+              <td>OR-Tools CP-SAT solver</td>
+              <td>Fixture feasibility, solver diagnostics contract, lane assignments (skipped if <code>ortools</code> absent)</td>
+            </tr>
+            <tr>
+              <td><code>test_extensibility.py</code></td>
+              <td>Plugin architecture</td>
+              <td>Custom score component registration, multi-charger lanes, new operator without code change, ARCHITECTURE.md docs</td>
+            </tr>
+            <tr>
+              <td><code>test_scheduler_engine.py</code></td>
+              <td>End-to-end engine</td>
+              <td>All 5 scenarios feasible, impossible infeasible, metrics populated, score breakdown present, weight changes affect totals</td>
+            </tr>
+            <tr>
+              <td><code>test_scheduler_invariants.py</code></td>
+              <td>Global invariants</td>
+              <td>All 5 scenarios pass <code>validate_schedule_invariants</code></td>
+            </tr>
+            <tr>
+              <td><code>test_scoring.py</code></td>
+              <td>Score computation</td>
+              <td>Individual wait, operator smoothness, overall network, breakdown includes unweighted+weighted+weight</td>
+            </tr>
+            <tr>
+              <td><code>test_solver_diagnostics.py</code></td>
+              <td>CP-SAT diagnostics formatting</td>
+              <td><code>finalize_schedule_result</code> preserves diagnostics, <code>build_solver_diagnostic_rows</code> handles <code>None</code> values</td>
+            </tr>
+            <tr>
+              <td><code>test_strategy_registry.py</code></td>
+              <td>Strategy registry + ViewModel</td>
+              <td>Default=custom_heuristic, cp_sat visibility tied to ortools, unknown id raises ValueError, ViewModel preserves selection</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Section 6: Fixture & Scenario Data Catalog ====== -->
+    <section id="fixtures">
+      <h2>Fixture &amp; Scenario Data Catalog</h2>
+
+      <h3>5 Assignment Scenarios (<code>data/scenarios/</code>)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Buses</th>
+              <th>Key Property</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>scenario_1</code></td><td>Even spacing</td><td>20</td><td>Baseline evenly spaced departures</td></tr>
+            <tr><td><code>scenario_2</code></td><td>Bunched start</td><td>20</td><td>Buses bunched at departure</td></tr>
+            <tr><td><code>scenario_3</code></td><td>Asymmetric load</td><td>14</td><td>Fewer buses, asymmetric</td></tr>
+            <tr><td><code>scenario_4</code></td><td>Operator-heavy</td><td>20</td><td>Operator weight = 2.0, tests weighted scoring</td></tr>
+            <tr><td><code>scenario_5</code></td><td>Worst case convergence</td><td>20</td><td>72-minute departure window, tests contention</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>6 Test Fixtures (<code>tests/fixtures/</code>)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fixture</th>
+              <th>Purpose</th>
+              <th>Expectation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>scenario_exact_range.json</code></td>
+              <td>Bus exactly at range edge</td>
+              <td>Feasible, 0 invariant violations</td>
+            </tr>
+            <tr>
+              <td><code>scenario_impossible_range.json</code></td>
+              <td>Range too short for route</td>
+              <td>Infeasible with warning</td>
+            </tr>
+            <tr>
+              <td><code>scenario_multi_charger.json</code></td>
+              <td>Station B has 2 chargers</td>
+              <td>Parallel lane assignments</td>
+            </tr>
+            <tr>
+              <td><code>scenario_multi_operator.json</code></td>
+              <td>3 operators, diverse patterns</td>
+              <td>Feasible, <code>operator_smoothness</code> computed</td>
+            </tr>
+            <tr>
+              <td><code>scenario_new_operator.json</code></td>
+              <td>Operator <code>"express_red"</code> not in code</td>
+              <td>Works without code change</td>
+            </tr>
+            <tr>
+              <td><code>scenario_simultaneous_arrivals.json</code></td>
+              <td>2 buses arrive same time</td>
+              <td>Deterministic ordering</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Section 7: Recurring Test Patterns ====== -->
+    <section id="patterns">
+      <h2>Recurring Test Patterns</h2>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Canonical E2E Pipeline</h3>
+          <p class="subtle">Used in 5+ test files. Load scenario, schedule, validate invariants.</p>
+          <pre><code>scenario = load_scenario("scenario_1")
+result = CustomHeuristicStrategy().schedule(scenario)
+violations = validate_schedule_invariants(scenario, result)
+self.assertTrue(result.feasible)
+self.assertEqual(len(violations), 0)</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3>Factory Helpers</h3>
+          <p class="subtle">Inline factories avoid fixture files for contract tests.</p>
+          <pre><code>def _make_one_bus_result() -> ScheduleResult:
+    events = [TimelineEvent(...)]
+    bus_plans = [BusPlan(...)]
+    return ScheduleResult(
+        feasible=True,
+        bus_plans=bus_plans,
+        metrics=ScheduleMetrics(...),
+    )</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3>Negative Testing</h3>
+          <p class="subtle">Construct bad input, assert errors contain expected keywords.</p>
+          <pre><code>buses = [Bus(id="same-id", ...),
+         Bus(id="same-id", ...)]
+errors = validate_scenario(scenario)
+self.assertTrue(
+    any("duplicate" in e.lower()
+        for e in errors))</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3>Architecture Boundary Guards</h3>
+          <p class="subtle">Prevent layer violations by scanning imports.</p>
+          <pre><code>for path in scheduler_dir.rglob("*.py"):
+    source = path.read_text()
+    self.assertNotIn(
+        "import streamlit", source)</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3>Fixture-Powered Edge Cases</h3>
+          <p class="subtle">Load known extreme JSON, run full pipeline, assert specific outcomes.</p>
+          <pre><code>def _load_fixture_scenario(name):
+    path = FIXTURE_DIR / f"{name}.json"
+    data = json.loads(
+        path.read_text(encoding="utf-8"))
+    return _parse_scenario(data)</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3><code>@unittest.skipUnless</code></h3>
+          <p class="subtle">CP-SAT tests conditional on OR-Tools availability.</p>
+          <pre><code>ORTOOLS_AVAILABLE = importlib.util.find_spec(
+    "ortools") is not None
+
+@unittest.skipUnless(ORTOOLS_AVAILABLE,
+    "OR-Tools is not installed")
+class CpSatStrategyTests(unittest.TestCase):</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3><code>with self.subTest()</code></h3>
+          <p class="subtle">Cross-product tests (strategy &times; scenario matrix).</p>
+          <pre><code>for scenario_id in ("scenario_1",
+                     "scenario_2",
+                     "scenario_5"):
+    with self.subTest(
+        strategy=option.id,
+        scenario=scenario_id):
+        result = strategy.schedule(scenario)</code></pre>
+        </div>
+
+        <div class="panel">
+          <h3><code>validate_schedule_invariants</code> &amp; <code>None</code> scenario</h3>
+          <p class="subtle">Deliberate seam: early-exit for infeasible results accepts <code>None</code> scenario.</p>
+          <pre><code>result = ScheduleResult(
+    feasible=False,
+    scenario_id="test")
+violations = validate_schedule_invariants(
+    None, result)  # type: ignore
+self.assertTrue(len(violations) > 0)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Section 8: Invoking the Tests ====== -->
+    <section id="invoking">
+      <h2>Invoking the Tests</h2>
+
+      <div class="callout">
+        <strong>Primary command</strong>
+        <pre><code>python -m unittest discover</code></pre>
+        This discovers all test files in <code>tests/</code> (a flat package) and runs them.
+        No configuration files are needed &mdash; the discovery works by default because
+        <code>tests/__init__.py</code> makes it a Python package.
+      </div>
+
+      <div class="callout">
+        <strong>Run a single file</strong>
+        <pre><code>python -m unittest tests/test_file.py</code></pre>
+        Useful during development for quick feedback on a specific module.
+      </div>
+
+      <div class="callout">
+        <strong>Environment notes</strong>
+        <ul>
+          <li>Python 3.11 (specified in <code>runtime.txt</code>)</li>
+          <li>Test runner: vanilla <code>unittest</code> &mdash; no pytest, no tox, no executable test scripts</li>
+          <li>No coverage tooling installed (no <code>.coveragerc</code>, no <code>coverage.py</code>)</li>
+          <li>OR-Tools is an optional dependency; CP-SAT tests skip gracefully via <code>@unittest.skipUnless</code></li>
+          <li>No CI/CD pipeline &mdash; relies on manual invocation or developer discipline</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ====== Section 9: Gap Analysis ====== -->
+    <section id="gaps">
+      <h2>Gap Analysis</h2>
+      <p class="subtle">
+        Deliberate or accepted gaps in the current test infrastructure. None are framed as
+        criticism &mdash; all reflect conscious design decisions or future opportunities.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Missing</th>
+              <th>Severity</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CI/CD pipeline</td>
+              <td>Medium</td>
+              <td>No automated test gate; relies on manual <code>python -m unittest discover</code></td>
+            </tr>
+            <tr>
+              <td>Code coverage measurement</td>
+              <td>Low</td>
+              <td>No <code>coverage.py</code> or threshold enforcement</td>
+            </tr>
+            <tr>
+              <td>Pytest adoption</td>
+              <td>Low</td>
+              <td><code>unittest</code> is fine for this scale; pytest would give nicer output and plugins</td>
+            </tr>
+            <tr>
+              <td>Performance / benchmark tests</td>
+              <td>Low</td>
+              <td>No timing assertions; scheduler engine timing is untracked</td>
+            </tr>
+            <tr>
+              <td>UI / Streamlit tests</td>
+              <td>Low</td>
+              <td>No browser automation; architecture guards instead</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>Design philosophy</strong>
+        The architecture boundary guards (asserting no Streamlit imports in <code>src/scheduler/</code>
+        and <code>src/reporting/</code>) and the AST-based import check in
+        <code>test_increment_5</code> represent a conscious tradeoff: verify isolation statically
+        rather than spinning up a browser. This keeps the test suite fast and dependency-light
+        while still enforcing the layered architecture.
+      </div>
+    </section>
+
+    <!-- ====== Section 10: Source-Test Mapping ====== -->
+    <section id="mapping">
+      <h2>Appendix: Source &rarr; Test Mapping Table</h2>
+      <p class="subtle">
+        Reverse-lookup index. For each source module, which test files cover it.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Source Module</th>
+              <th>Test Files</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>src/domain/models.py</code></td>
+              <td><code>test_increment_2</code>, <code>test_constraints</code>, <code>test_scoring</code>, <code>test_extensibility</code></td>
+            </tr>
+            <tr>
+              <td><code>src/domain/time.py</code></td>
+              <td><code>test_increment_2</code></td>
+            </tr>
+            <tr>
+              <td><code>src/domain/route.py</code></td>
+              <td><code>test_increment_2</code>, <code>test_candidates</code></td>
+            </tr>
+            <tr>
+              <td><code>src/adapters/scenario_loader.py</code></td>
+              <td><code>test_increment_2</code>, <code>test_scheduler_engine</code>, <code>test_strategy_registry</code></td>
+            </tr>
+            <tr>
+              <td><code>src/adapters/scenario_validator.py</code></td>
+              <td><code>test_increment_3</code></td>
+            </tr>
+            <tr>
+              <td><code>src/adapters/scenario_catalog.py</code></td>
+              <td><code>test_increment_0</code>, <code>test_increment_2</code></td>
+            </tr>
+            <tr>
+              <td><code>src/adapters/errors.py</code></td>
+              <td><code>test_increment_2</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/contract.py</code></td>
+              <td><code>test_increment_2</code>, <code>test_solver_diagnostics</code>, <code>test_scoring</code>, <code>test_extensibility</code>, <code>test_increment_5</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/candidates.py</code></td>
+              <td><code>test_candidates</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/constraints.py</code></td>
+              <td><code>test_constraints</code>, <code>test_scheduler_invariants</code>, <code>test_scheduler_engine</code>, <code>test_cp_sat_strategy</code>, <code>test_extensibility</code>, <code>test_increment_8</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/reservations.py</code></td>
+              <td><code>test_constraints</code>, <code>test_extensibility</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/results.py</code></td>
+              <td><code>test_solver_diagnostics</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/scoring.py</code></td>
+              <td><code>test_scoring</code>, <code>test_extensibility</code>, <code>test_scheduler_engine</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/strategies/registry.py</code></td>
+              <td><code>test_strategy_registry</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/strategies/custom_heuristic.py</code></td>
+              <td><code>test_scheduler_engine</code>, <code>test_increment_0</code>, <code>test_scheduler_invariants</code>, <code>test_extensibility</code>, <code>test_increment_8</code></td>
+            </tr>
+            <tr>
+              <td><code>src/scheduler/strategies/cp_sat_strategy.py</code></td>
+              <td><code>test_cp_sat_strategy</code></td>
+            </tr>
+            <tr>
+              <td><code>src/reporting/tables.py</code></td>
+              <td><code>test_increment_3</code>, <code>test_increment_5</code>, <code>test_extensibility</code></td>
+            </tr>
+            <tr>
+              <td><code>src/reporting/metrics.py</code></td>
+              <td><code>test_increment_5</code>, <code>test_solver_diagnostics</code></td>
+            </tr>
+            <tr>
+              <td><code>src/app_view_model.py</code></td>
+              <td><code>test_increment_0</code>, <code>test_increment_2</code>, <code>test_strategy_registry</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

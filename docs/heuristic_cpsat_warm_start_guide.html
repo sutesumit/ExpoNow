@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heuristic Warm Start for CP-SAT</title>
+  <style>
+    :root {
+      --bg: #0f1116;
+      --panel: #161a22;
+      --panel-2: #1b202a;
+      --line: #2c3442;
+      --text: #edf1f7;
+      --muted: #aab4c4;
+      --accent: #7fb7ff;
+      --accent-2: #8ee3c1;
+      --warn: #f3c969;
+      --danger: #ff8f8f;
+      --code: #0c1016;
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top right, rgba(127, 183, 255, 0.08), transparent 28%),
+        radial-gradient(circle at 20% 15%, rgba(142, 227, 193, 0.06), transparent 22%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, Segoe UI, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.5;
+    }
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero-copy {
+      padding: 28px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      font-size: 2.1rem;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      letter-spacing: 0;
+    }
+    h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    h3 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    .lede {
+      color: var(--muted);
+      max-width: 72ch;
+      margin-bottom: 18px;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .pill {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+      font-size: 0.92rem;
+    }
+    .figure {
+      padding: 18px;
+      overflow: hidden;
+    }
+    .mini-note {
+      color: var(--muted);
+      font-size: 0.94rem;
+      margin-top: 10px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .card {
+      padding: 18px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .callout {
+      border-left: 4px solid var(--accent);
+      padding: 14px 16px;
+      background: rgba(127, 183, 255, 0.08);
+      border-radius: 8px;
+      margin: 18px 0;
+      color: var(--text);
+    }
+    .callout strong { color: #fff; }
+    .callout.warn {
+      border-left-color: var(--warn);
+      background: rgba(243, 201, 105, 0.08);
+    }
+    .callout.good {
+      border-left-color: var(--accent-2);
+      background: rgba(142, 227, 193, 0.08);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th {
+      color: #fff;
+      background: rgba(255,255,255,0.03);
+      font-weight: 600;
+    }
+    td { color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.93rem;
+    }
+    pre {
+      margin: 0;
+      padding: 14px;
+      background: var(--code);
+      color: #dce7f5;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .svg-box {
+      width: 100%;
+      display: block;
+    }
+    .section {
+      margin-top: 22px;
+    }
+    .section > .panel {
+      padding: 22px;
+    }
+    .flow-legend {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .legend-item {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .legend-item strong { color: #fff; display: block; margin-bottom: 4px; }
+    @media (max-width: 980px) {
+      .hero, .grid-2, .grid-3, .flow-legend { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <section class="panel hero-copy">
+        <h1>Heuristic Warm Start for CP-SAT</h1>
+        <p class="lede">
+          This document explains the relationship between the custom greedy scheduler and CP-SAT:
+          the heuristic finds a fast, valid incumbent first, then CP-SAT uses that schedule as a
+          warm start and searches for a better global minimum under the same model.
+        </p>
+        <div class="pill-row">
+          <span class="pill">Greedy first</span>
+          <span class="pill">CP-SAT hinting</span>
+          <span class="pill">Global search</span>
+          <span class="pill">Feasible incumbent</span>
+          <span class="pill">Bound + gap</span>
+        </div>
+        <div class="callout good">
+          <strong>Core mental model:</strong> the heuristic does not compete with CP-SAT. It gives CP-SAT
+          a head start so the solver can spend its time improving a real schedule instead of discovering
+          the first valid one from scratch.
+        </div>
+        <div class="callout warn">
+          <strong>Important:</strong> CP-SAT objective quality and dashboard metrics are related but not identical.
+          A solver-improved objective can still look worse on one descriptive metric such as max individual wait.
+        </div>
+      </section>
+
+      <section class="panel figure">
+        <h2>One-Line Flow</h2>
+        <svg class="svg-box" viewBox="0 0 900 360" role="img" aria-label="Heuristic to CP-SAT workflow">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+              <path d="M0,0 L10,4 L0,8 z" fill="#7fb7ff"></path>
+            </marker>
+          </defs>
+          <rect x="30" y="80" width="190" height="120" rx="16" fill="#18202c" stroke="#2c3442"/>
+          <rect x="255" y="80" width="190" height="120" rx="16" fill="#18202c" stroke="#2c3442"/>
+          <rect x="480" y="80" width="190" height="120" rx="16" fill="#18202c" stroke="#2c3442"/>
+          <rect x="705" y="80" width="160" height="120" rx="16" fill="#18202c" stroke="#2c3442"/>
+          <line x1="220" y1="140" x2="255" y2="140" stroke="#7fb7ff" stroke-width="4" marker-end="url(#arrow)"/>
+          <line x1="445" y1="140" x2="480" y2="140" stroke="#7fb7ff" stroke-width="4" marker-end="url(#arrow)"/>
+          <line x1="670" y1="140" x2="705" y2="140" stroke="#7fb7ff" stroke-width="4" marker-end="url(#arrow)"/>
+          <text x="125" y="125" fill="#edf1f7" text-anchor="middle" font-size="22" font-weight="600">Heuristic</text>
+          <text x="125" y="155" fill="#aab4c4" text-anchor="middle" font-size="16">fast valid schedule</text>
+          <text x="350" y="125" fill="#edf1f7" text-anchor="middle" font-size="22" font-weight="600">Hint Map</text>
+          <text x="350" y="155" fill="#aab4c4" text-anchor="middle" font-size="16">candidate, lane, start</text>
+          <text x="575" y="125" fill="#edf1f7" text-anchor="middle" font-size="22" font-weight="600">CP-SAT</text>
+          <text x="575" y="155" fill="#aab4c4" text-anchor="middle" font-size="16">branch and bound</text>
+          <text x="785" y="125" fill="#edf1f7" text-anchor="middle" font-size="22" font-weight="600">Better</text>
+          <text x="785" y="155" fill="#aab4c4" text-anchor="middle" font-size="16">or just feasible</text>
+        </svg>
+        <p class="mini-note">
+          The warm start is only useful if the heuristic schedule can be translated into a CP-SAT assignment
+          for each bus, station, lane, and start time.
+        </p>
+      </section>
+    </div>
+
+    <section class="panel section">
+      <h2>What Each Solver Is Doing</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>Custom heuristic</h3>
+          <p class="lede">
+            Builds a schedule bus by bus using local decisions. It is fast, deterministic, and usually
+            finds a good-feeling schedule quickly.
+          </p>
+        </div>
+        <div class="card">
+          <h3>CP-SAT</h3>
+          <p class="lede">
+            Treats the full schedule as a constraint model and searches the solution space for a better
+            global arrangement under the same rules.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Warm start</h3>
+          <p class="lede">
+            Gives CP-SAT a known-valid incumbent. That means the search begins with a real schedule already
+            in hand instead of a blank slate.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2 section">
+      <div class="panel">
+        <h2>Heuristic-to-CP-SAT Mapping</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Heuristic artifact</th>
+              <th>CP-SAT variable</th>
+              <th>Why it matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Chosen station sequence</td>
+              <td><code>candidate.selected = 1</code></td>
+              <td>Locks in the same route pattern as the warm start.</td>
+            </tr>
+            <tr>
+              <td>Charge start time</td>
+              <td><code>stop.start = heuristic_start</code></td>
+              <td>Seeds the solver with a complete, time-feasible schedule.</td>
+            </tr>
+            <tr>
+              <td>Charger lane</td>
+              <td><code>lane_selected = 1</code></td>
+              <td>Preserves the exact physical charger assignment.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <strong>Why the mapping must be exact:</strong> CP-SAT only benefits from hints if they line up with its own
+          candidate structure. If a bus’s heuristic route cannot be represented as a CP-SAT candidate, the hint should
+          be skipped rather than partially applied.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Decision Tree</h2>
+        <svg class="svg-box" viewBox="0 0 840 470" role="img" aria-label="Hint usage decision tree">
+          <defs>
+            <marker id="treeArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+              <path d="M0,0 L10,4 L0,8 z" fill="#8ee3c1"></path>
+            </marker>
+          </defs>
+          <rect x="285" y="24" width="270" height="60" rx="14" fill="#18202c" stroke="#2c3442"/>
+          <text x="420" y="60" fill="#edf1f7" text-anchor="middle" font-size="18" font-weight="600">Run custom heuristic first</text>
+
+          <line x1="420" y1="84" x2="420" y2="122" stroke="#8ee3c1" stroke-width="3" marker-end="url(#treeArrow)"/>
+          <rect x="110" y="130" width="260" height="70" rx="14" fill="#18202c" stroke="#2c3442"/>
+          <rect x="470" y="130" width="260" height="70" rx="14" fill="#18202c" stroke="#2c3442"/>
+          <text x="240" y="158" fill="#edf1f7" text-anchor="middle" font-size="16" font-weight="600">Feasible and mappable?</text>
+          <text x="240" y="180" fill="#aab4c4" text-anchor="middle" font-size="14">Yes: build full hint map</text>
+          <text x="600" y="158" fill="#edf1f7" text-anchor="middle" font-size="16" font-weight="600">No</text>
+          <text x="600" y="180" fill="#aab4c4" text-anchor="middle" font-size="14">Skip hint, warn in UI</text>
+
+          <line x1="240" y1="200" x2="240" y2="250" stroke="#8ee3c1" stroke-width="3" marker-end="url(#treeArrow)"/>
+          <rect x="76" y="255" width="330" height="82" rx="14" fill="#18202c" stroke="#2c3442"/>
+          <text x="241" y="286" fill="#edf1f7" text-anchor="middle" font-size="16" font-weight="600">AddHint(selected/start/lane)</text>
+          <text x="241" y="309" fill="#aab4c4" text-anchor="middle" font-size="14">Warm start the incumbent</text>
+
+          <line x1="241" y1="337" x2="241" y2="386" stroke="#8ee3c1" stroke-width="3" marker-end="url(#treeArrow)"/>
+          <rect x="76" y="390" width="330" height="62" rx="14" fill="#18202c" stroke="#2c3442"/>
+          <text x="241" y="427" fill="#edf1f7" text-anchor="middle" font-size="16" font-weight="600">Solve, then improve globally</text>
+
+          <line x1="600" y1="200" x2="600" y2="250" stroke="#f3c969" stroke-width="3" marker-end="url(#treeArrow)"/>
+          <rect x="470" y="255" width="260" height="82" rx="14" fill="#18202c" stroke="#2c3442"/>
+          <text x="600" y="286" fill="#edf1f7" text-anchor="middle" font-size="16" font-weight="600">No warm start</text>
+          <text x="600" y="309" fill="#aab4c4" text-anchor="middle" font-size="14">Still solve, but from scratch</text>
+        </svg>
+      </div>
+    </section>
+
+    <section class="panel section">
+      <h2>How CP-SAT Searches For A Global Minimum</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>1. Start with a feasible incumbent</h3>
+          <p class="lede">
+            The heuristic schedule is already valid, so CP-SAT can begin with an objective value instead of zero knowledge.
+            That gives the solver a target to beat.
+          </p>
+          <h3>2. Propagate constraints</h3>
+          <p class="lede">
+            CP-SAT tightens variable domains based on no-overlap, route order, charging duration, and range constraints.
+          </p>
+        </div>
+        <div class="card">
+          <h3>3. Branch when necessary</h3>
+          <p class="lede">
+            When multiple values remain possible, the solver splits into search branches. It tries alternatives, keeps
+            the best feasible schedules, and prunes options that cannot beat the current incumbent.
+          </p>
+          <h3>4. Use bounds to measure progress</h3>
+          <p class="lede">
+            The best objective bound tells you how far the solver can mathematically prove it is from the true optimum.
+          </p>
+        </div>
+      </div>
+      <div class="callout good">
+        <strong>Read the search like a story:</strong> CP-SAT is not marching directly downhill. It is exploring a huge
+        tree of possibilities, keeping the best incumbent it has seen, and using bounds to prove when it can stop.
+      </div>
+    </section>
+
+    <section class="grid-2 section">
+      <div class="panel">
+        <h2>How To Interpret Diagnostics</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Signal</th>
+              <th>What it usually means</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>FEASIBLE</code> + nonzero gap</td>
+              <td>A valid schedule was found, but the proof is incomplete.</td>
+            </tr>
+            <tr>
+              <td><code>Objective Improvement &gt; 0</code></td>
+              <td>CP-SAT beat the heuristic incumbent on the solver objective.</td>
+            </tr>
+            <tr>
+              <td><code>Best Objective Bound = 0</code></td>
+              <td>The solver did not establish a useful lower bound during the time limit.</td>
+            </tr>
+            <tr>
+              <td>High conflict and branch counts</td>
+              <td>The search worked hard, but may not have found much extra value.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Why The Dashboard Can Feel Counterintuitive</h2>
+        <p class="lede">
+          The UI shows both descriptive schedule metrics and solver diagnostics. A CP-SAT solution can look worse on one
+          human-facing metric and still improve the solver objective because the objective function is a weighted blend.
+        </p>
+        <pre><code>solver objective = scaled_wait + scaled_journey_time</code></pre>
+        <div class="callout warn">
+          <strong>Human translation:</strong> if you care mainly about one metric such as max wait, check whether the
+          objective function is actually aligned with that preference.
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section">
+      <h2>Suggested Primary Web Resources</h2>
+      <p class="lede">
+        These are the best starting points when you want to verify CP-SAT behavior or explain the solver model to someone else.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>OR-Tools CP-SAT overview</h3>
+          <p><a href="https://developers.google.com/optimization/cp/cp_solver" target="_blank" rel="noopener noreferrer">developers.google.com/optimization/cp/cp_solver</a></p>
+          <p class="lede">Good for solver statuses, time limits, statistics, and the overall CP-SAT workflow.</p>
+        </div>
+        <div class="card">
+          <h3>Python CP-SAT reference</h3>
+          <p><a href="https://developers.google.com/optimization/reference/python/sat/python/cp_model" target="_blank" rel="noopener noreferrer">developers.google.com/optimization/reference/python/sat/python/cp_model</a></p>
+          <p class="lede">Useful when you need the Python API surface for model building and solver calls.</p>
+        </div>
+        <div class="card">
+          <h3>AddHint reference</h3>
+          <p><a href="https://developers.google.com/optimization/reference/sat/cp_model/CpModelBuilder/" target="_blank" rel="noopener noreferrer">developers.google.com/optimization/reference/sat/cp_model/CpModelBuilder/</a></p>
+          <p class="lede">Primary reference for hinting integer and Boolean variables into the model.</p>
+        </div>
+        <div class="card">
+          <h3>Time-limit examples</h3>
+          <p><a href="https://developers.google.com/optimization/cp/cp_tasks" target="_blank" rel="noopener noreferrer">developers.google.com/optimization/cp/cp_tasks</a></p>
+          <p class="lede">Helpful for understanding how solver time limits and search settings affect results.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section">
+      <h2>Quick Summary</h2>
+      <div class="flow-legend">
+        <div class="legend-item">
+          <strong>Heuristic</strong>
+          Finds the first good valid answer quickly.
+        </div>
+        <div class="legend-item">
+          <strong>Hint</strong>
+          Hands that answer to CP-SAT as a starting incumbent.
+        </div>
+        <div class="legend-item">
+          <strong>Search</strong>
+          Explores alternative assignments to lower the objective.
+        </div>
+        <div class="legend-item">
+          <strong>Diagnostics</strong>
+          Tell you whether CP-SAT improved, stalled, or proved optimality.
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

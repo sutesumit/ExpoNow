@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ExpoNow Scheduler Strategy Catalog</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1e2730;
+      --muted: #596672;
+      --line: #c9d3dc;
+      --paper: #f6f4ee;
+      --surface: #ffffff;
+      --accent: #215f7a;
+      --accent-2: #2f7d5a;
+      --accent-3: #8a5d17;
+      --accent-4: #8e4d6d;
+      --soft-1: #eaf3f7;
+      --soft-2: #e7f3ed;
+      --soft-3: #f4ecd9;
+      --soft-4: #f4e6ee;
+      --shadow: 0 2px 10px rgba(30, 39, 48, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      max-width: 980px;
+      font-weight: 780;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      margin-top: 56px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 1.02rem;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    p, li { color: var(--ink); }
+
+    .lede {
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      margin-top: 12px;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin: 20px 0;
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f8fafb;
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.9em;
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px 6px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .flowchart {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fbfcfd;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+    }
+
+    .panel h3 {
+      margin-top: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid transparent;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .b-blue { background: var(--soft-1); color: var(--accent); border-color: #b7d4e1; }
+    .b-green { background: var(--soft-2); color: var(--accent-2); border-color: #b5d6c4; }
+    .b-amber { background: var(--soft-3); color: var(--accent-3); border-color: #d8c59b; }
+    .b-rose { background: var(--soft-4); color: var(--accent-4); border-color: #d6b2c4; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid var(--line);
+      display: inline-block;
+    }
+
+    .s-blue { background: var(--soft-1); }
+    .s-green { background: var(--soft-2); }
+    .s-amber { background: var(--soft-3); }
+    .s-rose { background: var(--soft-4); }
+
+    ul { margin: 10px 0 0 20px; }
+
+    .refs a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .refs a:hover { text-decoration: underline; }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      main { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ExpoNow Scheduler Strategy Catalog</h1>
+      <p class="lede">
+        This document compares the current custom heuristic with several well-known optimization
+        approaches that fit an electric bus charging scheduler. It also explains how a strategy
+        dropdown would wire into <code>src/scheduler/strategies/</code> and into the Streamlit UI.
+      </p>
+      <div class="legend" aria-label="Document legend">
+        <span><i class="swatch s-blue"></i> Exact / constraint-based</span>
+        <span><i class="swatch s-green"></i> Heuristic / metaheuristic</span>
+        <span><i class="swatch s-amber"></i> Modeling layer / hybrid</span>
+        <span><i class="swatch s-rose"></i> UI / integration guidance</span>
+      </div>
+    </header>
+
+    <section>
+      <div class="callout">
+        <strong>Current state in the codebase</strong>
+        The app currently hard-wires <code>CustomHeuristicStrategy</code> in
+        <code>src/app_view_model.py</code>. The UI only has a scenario dropdown today.
+        There is no strategy dropdown yet, so any solver choice is currently a code-level decision,
+        not a runtime selection.
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Approach</th>
+            <th>Best for</th>
+            <th>Strength</th>
+            <th>Main tradeoff</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge b-green">Current</span>Custom heuristic</td>
+            <td>Fast, explainable schedules with low dependency cost</td>
+            <td>Easy to reason about and easy to keep deterministic</td>
+            <td>Greedy decisions are not globally optimal</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-blue">Exact</span>OR-Tools CP-SAT</td>
+            <td>Global optimization with interval and resource constraints</td>
+            <td>Very strong fit for charger lane occupancy and schedule timing</td>
+            <td>Modeling effort and solve time can grow quickly</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-blue">Exact</span>Z3 Optimize</td>
+            <td>Logical feasibility, soft constraints, and proof-style reasoning</td>
+            <td>Excellent for expressive constraints and satisfiability checking</td>
+            <td>Not the most natural fit for rich scheduling objectives</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-blue">Exact</span>PuLP / MILP</td>
+            <td>Clean linear or mixed-integer formulations</td>
+            <td>Simple modeling story and solver flexibility</td>
+            <td>Discrete time and conflict constraints can bloat the model</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-amber">Modeling</span>Pyomo</td>
+            <td>Large model families, solver swapping, nonlinear extensions</td>
+            <td>Useful when the model grows beyond a single formulation</td>
+            <td>It is a modeling layer, not the solver itself</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-green">Heuristic</span>ALNS / GA / SA / GRASP</td>
+            <td>Large instances and near-real-time replanning</td>
+            <td>Flexible, scalable, and easy to hybridize</td>
+            <td>No optimality guarantee and more tuning work</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-amber">Hybrid</span>Min-cost flow / decomposition</td>
+            <td>When the problem can be split into network or subproblem layers</td>
+            <td>Great for scale if the structure matches</td>
+            <td>Harder to design and maintain than a direct solver</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>1. Current Implemented Strategy: Custom Heuristic</h2>
+      <p class="subtle">
+        This is the engine that exists today in <code>src/scheduler/strategies/custom_heuristic.py</code>.
+        It is greedy across buses: sort buses by departure time, enumerate feasible stop combinations
+        for each bus, score the candidates using wait and travel time, commit the best one, then move
+        to the next bus using the updated reservations.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>How it works</h3>
+          <ul>
+            <li>Sort buses by <code>(departure_minutes, id)</code>.</li>
+            <li>Generate route-order-preserving candidate stop sets.</li>
+            <li>For each candidate, probe charger availability through the reservation manager.</li>
+            <li>Choose the lowest-score candidate that still fits the current reservation state.</li>
+            <li>Commit the chosen slots and build the timeline events.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Complexity and fit</h3>
+          <ul>
+            <li>Candidate generation is exponential in the number of intermediate stations because it uses combinations.</li>
+            <li>Per candidate, the scheduler scans charger lanes and existing reservations to find slots.</li>
+            <li>Good fit for small to medium scenarios, deterministic runs, and explainable output.</li>
+            <li>Weak point: earlier buses can block later buses because the algorithm does not re-optimize globally.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flowchart" aria-label="Custom heuristic flowchart">
+        <div class="step"><strong>Start</strong>Load scenario, buses, route, station capacities, and weights.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Sort buses</strong>Process buses in departure order so early buses claim capacity first.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Generate candidates</strong>Enumerate every route-respecting station combination that stays within range.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Probe reservations</strong>For each candidate, compute arrival times and ask the reservation manager for a valid charger lane slot.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Score candidate</strong>Rank by total wait plus travel time, weighted by scenario weights.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Commit</strong>Reserve the chosen slots, build the bus timeline, and move to the next bus.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Validate</strong>Run invariant checks on range, order, durations, and reservation conflicts.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. OR-Tools CP-SAT</h2>
+      <p class="subtle">
+        OR-Tools CP-SAT is the most natural exact upgrade for this project. The scheduler can model
+        each bus stop as an optional interval, put each charger lane under a no-overlap constraint,
+        and minimize wait or total journey time globally. Google documents CP-SAT as a constraint
+        programming / integer optimization solver with strong support for scheduling primitives.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul>
+            <li>Native support for interval and resource constraints.</li>
+            <li>Can optimize all buses together instead of committing greedily.</li>
+            <li>Works well for hard constraints plus weighted soft objectives.</li>
+            <li>Good match for charger lane occupancy, waiting windows, and fixed route order.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul>
+            <li>Requires a rewrite of the scheduling model.</li>
+            <li>All times and durations must be integer-scaled.</li>
+            <li>Large instances may still need careful tuning and time limits.</li>
+            <li>Less transparent than the current hand-rolled greedy flow.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Complexity</strong>
+        The underlying problem is still combinatorial and generally NP-hard. CP-SAT does not make
+        that go away; it just gives the solver much better machinery for pruning and search.
+      </div>
+
+      <div class="flowchart" aria-label="CP-SAT flowchart">
+        <div class="step"><strong>Start</strong>Translate the scenario into integer time units and decision variables.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Create intervals</strong>Represent each possible charging stop as an optional interval.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Add constraints</strong>Enforce route order, range limits, lane capacity, and charging duration.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Set objective</strong>Minimize wait time, lateness, or the weighted score chosen by the scenario.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Solve</strong>Let CP-SAT search globally across buses and stations.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Decode</strong>Convert the chosen intervals back into <code>ScheduleResult</code>, reservations, and timeline events.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Validate</strong>Run the shared invariants and scoring layer.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Z3 Optimize</h2>
+      <p class="subtle">
+        Z3 is excellent when the main concern is satisfiability, symbolic reasoning, or complex logical
+        constraints. It can also optimize objectives, so it can solve scheduling-style formulations, but
+        it is usually more natural for proof-heavy or rule-heavy problems than for rich schedule packing.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul>
+            <li>Very expressive for logical rules, implications, and soft constraints.</li>
+            <li>Useful for proving that a schedule exists or does not exist.</li>
+            <li>Strong fit for validation layers and rule experimentation.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul>
+            <li>Not as purpose-built for scheduling as CP-SAT.</li>
+            <li>Modeling time and solver time can be higher on operational schedules.</li>
+            <li>Usually less ergonomic for interval-style resource allocation.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Complexity</strong>
+        Worst-case solving remains exponential, and in practice the usefulness depends on how the
+        schedule is encoded. Z3 shines when logic is the main problem, not when the model is mostly
+        temporal resource packing.
+      </div>
+
+      <div class="flowchart" aria-label="Z3 flowchart">
+        <div class="step"><strong>Start</strong>Declare buses, stations, times, and boolean decision variables.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Add logic</strong>Encode range rules, ordering rules, mutual exclusion, and soft penalties.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Optimize</strong>Tell Z3 what to minimize or maximize.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Check model</strong>Ask whether the constraints are satisfiable and inspect any counterexample if not.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Extract schedule</strong>Map the model back into timeline events and reservations.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. PuLP / MILP</h2>
+      <p class="subtle">
+        PuLP is a modeling layer for linear and mixed-integer programming. It is a good fit if we want
+        to write the scheduling problem as binary assignment and time-indexed constraints, then solve it
+        with a MILP backend such as CBC, GLPK, CPLEX, or Gurobi.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul>
+            <li>Readable mathematical formulation.</li>
+            <li>Solver-agnostic: the model can be paired with multiple MILP backends.</li>
+            <li>Great for comparing objective tradeoffs and sensitivity to weights.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul>
+            <li>Time-expanded MILPs can become large very quickly.</li>
+            <li>Interval-style resource rules need extra binary variables or linearization.</li>
+            <li>Often less elegant than CP-SAT for pure schedule packing.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Complexity</strong>
+        MILP is NP-hard in general. The formulation can still be practical for our problem size if the
+        horizon is not too long and the decision grid stays compact.
+      </div>
+
+      <div class="flowchart" aria-label="PuLP flowchart">
+        <div class="step"><strong>Start</strong>Choose a time grid or binary decision structure.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Define variables</strong>Create assignment, start-time, lane, and wait variables.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Add linear constraints</strong>Encode range, order, station capacity, and charging duration.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Set objective</strong>Minimize the weighted schedule cost.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Solve with backend</strong>Pass the model to CBC, GLPK, or a commercial solver.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Post-process</strong>Turn the selected binaries into a readable schedule.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Pyomo as a Modeling Layer</h2>
+      <p class="subtle">
+        Pyomo is not a solver by itself. It is useful when the scheduling model grows beyond a single
+        formulation or when we want to experiment with MILP, nonlinear, or generalized disjunctive
+        programming models without rewriting the application each time.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul>
+            <li>Very flexible for advanced formulations and solver swapping.</li>
+            <li>Works well when the problem eventually expands into infrastructure planning plus operations.</li>
+            <li>Good if we want a model-first architecture.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul>
+            <li>More abstraction than PuLP.</li>
+            <li>Still requires a backend solver to do the actual optimization.</li>
+            <li>Can be overkill for the current project size.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flowchart" aria-label="Pyomo flowchart">
+        <div class="step"><strong>Start</strong>Describe the scheduling model in algebraic form.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Pick formulation</strong>Choose LP, MILP, MINLP, or disjunctive structure.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Select solver</strong>Attach a backend such as CBC, HiGHS, SCIP, or Gurobi.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Solve and compare</strong>Run the model with multiple solvers if needed.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Integrate</strong>Convert the solution into the shared scheduler result contract.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Metaheuristics: ALNS, GA, SA, GRASP</h2>
+      <p class="subtle">
+        Literature on electric bus scheduling regularly uses metaheuristics when the instance size grows
+        or when exact methods become too slow. Adaptive large neighborhood search, genetic algorithms,
+        simulated annealing, and GRASP are all well known in this space. They are especially useful for
+        large fleets, rerouting under uncertainty, or hybrid models with many soft objectives.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul>
+            <li>Flexible and easy to hybridize with domain rules.</li>
+            <li>Scales better than exact solvers on some large instances.</li>
+            <li>Good for re-optimization and rolling-horizon scheduling.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul>
+            <li>No optimality guarantee.</li>
+            <li>Requires tuning of operators, temperature, or mutation settings.</li>
+            <li>Results can be less deterministic unless we control the random seed carefully.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Complexity</strong>
+        The complexity is usually driven by the number of iterations, neighborhood moves, or restarts
+        rather than by a closed-form worst-case bound. That makes these methods flexible, but also more
+        dependent on tuning and benchmarking.
+      </div>
+
+      <div class="flowchart" aria-label="Metaheuristic flowchart">
+        <div class="step"><strong>Start</strong>Build an initial feasible schedule, often from a greedy heuristic.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Destroy / mutate</strong>Remove, swap, or perturb part of the current solution.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Repair / rebuild</strong>Reinsert decisions using heuristics or local search.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Accept or reject</strong>Keep the change if it improves the score or passes a probabilistic rule.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Repeat</strong>Continue until the time budget, iteration cap, or convergence condition is met.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>7. Network Flow, Decomposition, and Hybrid Methods</h2>
+      <p class="subtle">
+        These are not always the first tools people reach for, but they are very real options. If the
+        scheduler can be represented as a network, min-cost flow can be effective. If the problem splits
+        naturally into infrastructure, route assignment, and charging decisions, then Benders-style or
+        other decomposition methods can be powerful.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Pros</h3>
+          <ul>
+            <li>Can be very strong when the problem structure matches the formulation.</li>
+            <li>Good candidate for scaling a larger system beyond a single-day schedule.</li>
+            <li>Allows one solver to handle a subproblem while another handles the master problem.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Cons</h3>
+          <ul>
+            <li>Design effort is higher than a direct exact or greedy approach.</li>
+            <li>Hybrid systems are more complex to test and debug.</li>
+            <li>The formulation can become very domain-specific.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flowchart" aria-label="Hybrid flowchart">
+        <div class="step"><strong>Start</strong>Split the problem into route, charging, and capacity decisions.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Master problem</strong>Decide the high-level assignment or network flow structure.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Subproblem</strong>Optimize charging times or lane occupancy for the current master solution.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Feedback</strong>Return feasibility cuts or cost improvements to the master problem.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Converge</strong>Repeat until no better solution appears.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>How To Add Another Strategy</h2>
+      <p class="subtle">
+        The app now keeps algorithms behind the shared <code>SchedulerStrategy</code>
+        contract in <code>src/scheduler/contract.py</code>. The Streamlit page selects
+        a scenario and a solver engine separately, then passes both ids into the view
+        model so the selected strategy can produce the same <code>ScheduleResult</code>
+        shape the reporting layer already understands.
+      </p>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Recommended folder shape</h3>
+          <pre><code>src/scheduler/
+  contract.py
+  candidates.py
+  reservations.py
+  scoring.py
+  timeline.py
+  results.py
+  strategies/
+    custom_heuristic.py
+    cp_sat_strategy.py
+    z3_strategy.py
+    pulp_strategy.py
+    registry.py</code></pre>
+        </div>
+        <div class="panel">
+          <h3>Integration steps</h3>
+          <ul>
+            <li>Create a new class that implements <code>schedule(scenario) -&gt; ScheduleResult</code>.</li>
+            <li>Keep the strategy pure: no Streamlit imports, no UI code, no direct reporting imports.</li>
+            <li>Return the shared contract objects: <code>BusPlan</code>, <code>StationReservation</code>, <code>ScheduleMetrics</code>, and <code>ScoreBreakdown</code>.</li>
+            <li>Add the new class to <code>src/scheduler/strategies/registry.py</code> with an id, label, description, experimental flag, and availability check.</li>
+            <li>Let the UI call <code>render_strategy_selector()</code>; the registry controls which strategies are visible.</li>
+            <li>Run the shared invariant tests against every strategy so the UI never has to know solver internals.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Install notes</strong>
+        Base app dependencies remain in <code>requirements.txt</code>. CP-SAT support is optional:
+        install <code>requirements-solver-cpsat.txt</code> to make
+        <code>OR-Tools CP-SAT (experimental)</code> appear in the strategy dropdown.
+        Without OR-Tools installed, the registry hides CP-SAT from normal UI selection;
+        direct calls return an unavailable-strategy warning.
+      </div>
+
+      <div class="callout">
+        <strong>UI wiring pattern</strong>
+        The app should keep scenario selection and solver selection separate. The scenario dropdown
+        picks the input world. The strategy dropdown picks the optimization engine. Then the result
+        renderer consumes only <code>ScheduleResult</code>, which keeps the UI isolated from solver details.
+      </div>
+
+      <div class="flowchart" aria-label="UI integration flowchart">
+        <div class="step"><strong>Scenario selected</strong>User picks a scenario from the existing dropdown.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Strategy selected</strong>User chooses a solver from the strategy dropdown.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Instantiate</strong>Look up the strategy class in the registry and create the solver.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Schedule</strong>Call <code>schedule(scenario)</code> and receive <code>ScheduleResult</code>.</div>
+        <div class="arrow">&darr;</div>
+        <div class="step"><strong>Render</strong>Use the existing reporting layer to display timelines, queues, and metrics.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Reference Notes</h2>
+      <p class="subtle">
+        This page was assembled from the local implementation and the following public references.
+        The links are here so the document can be used as both a design note and a research index.
+      </p>
+
+      <div class="panel refs">
+        <ul>
+          <li><a href="https://developers.google.com/optimization/cp/cp_solver">OR-Tools CP-SAT</a></li>
+          <li><a href="https://github.com/google/or-tools/blob/stable/ortools/sat/docs/scheduling.md">OR-Tools scheduling guide</a></li>
+          <li><a href="https://www.microsoft.com/en-us/research/project/z3-3/">Z3 research project</a></li>
+          <li><a href="https://microsoft.github.io/z3guide/docs/optimization/arithmeticaloptimization">Z3 optimization guide</a></li>
+          <li><a href="https://coin-or.github.io/pulp/">PuLP documentation</a></li>
+          <li><a href="https://pyomo.readthedocs.io/en/stable/">Pyomo documentation</a></li>
+          <li><a href="https://developers.google.com/optimization/routing/vrptw">OR-Tools vehicle routing with time windows</a></li>
+          <li><a href="https://www.mdpi.com/2673-7590/4/3/49">Electric bus scheduling and charging review</a></li>
+          <li><a href="https://orbilu.uni.lu/bitstream/10993/67339/1/1-s2.0-S0360835225009283-main.pdf">Metaheuristic optimization for scheduling mixed-fleet electric buses</a></li>
+          <li><a href="https://www.mdpi.com/2624-6511/8/3/85">Comparison of optimisation techniques for the electric vehicle scheduling problem</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

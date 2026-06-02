@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ExpoNow Architecture Guide v2</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #5b6673;
+      --line: #c8d0d9;
+      --paper: #f7f5ef;
+      --surface: #ffffff;
+      --blue: #1f6f8b;
+      --green: #2f7d5a;
+      --amber: #9a6b18;
+      --red: #a2403d;
+      --violet: #6655a6;
+      --soft-blue: #e6f1f5;
+      --soft-green: #e7f3ed;
+      --soft-amber: #f4ecd9;
+      --soft-red: #f5e4e2;
+      --soft-violet: #ece9f5;
+      --shadow: 0 1px 6px rgba(31, 41, 51, 0.1);
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6; font-size: 16px;
+    }
+    .layout-wrapper {
+      display: flex; align-items: flex-start;
+      width: 100%; max-width: 1640px; margin: 0 auto; min-height: 100vh;
+    }
+    main {
+      flex: 1; min-width: 0; padding: 40px 28px 80px;
+    }
+    header {
+      margin-bottom: 32px; border-bottom: 1px solid var(--line); padding-bottom: 28px;
+    }
+    h1, h2, h3 { margin: 0; line-height: 1.22; letter-spacing: -0.01em; }
+    h1 {
+      max-width: 900px; font-size: clamp(2rem, 5vw, 4.4rem);
+      font-weight: 760; letter-spacing: -0.02em;
+    }
+    h2 { margin-top: 56px; margin-bottom: 12px; font-size: clamp(1.45rem, 2.2vw, 2.05rem); }
+    h3 { margin-top: 36px; font-size: 1.05rem; font-weight: 720; }
+    p { margin: 12px 0 0; line-height: 1.65; }
+    ul, ol { line-height: 1.7; }
+    code {
+      border: 1px solid var(--line); border-radius: 5px; background: #f8fafb;
+      padding: 2px 6px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.9em;
+    }
+    pre {
+      border: 1px solid var(--line); border-radius: var(--radius); background: #fbfcfd;
+      padding: 16px 20px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.9rem; line-height: 1.6; overflow-x: auto; white-space: pre;
+    }
+    pre code { border: none; background: transparent; padding: 0; font-size: inherit; }
+    .lede {
+      max-width: 840px; color: var(--muted); font-size: 1.1rem; line-height: 1.7;
+    }
+    .section-note { max-width: 820px; color: var(--muted); }
+    .diagram {
+      margin-top: 22px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--surface); padding: 24px; box-shadow: var(--shadow); overflow-x: auto;
+    }
+    .card {
+      border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+      padding: 18px; word-wrap: break-word; overflow-wrap: break-word;
+    }
+    .card strong { display: block; margin-bottom: 6px; }
+    .card span { color: var(--muted); font-size: 0.91rem; line-height: 1.55; }
+    .blue { border-color: #92bfd0; background: var(--soft-blue); }
+    .green { border-color: #9ccab4; background: var(--soft-green); }
+    .amber { border-color: #d5bb7d; background: var(--soft-amber); }
+    .red { border-color: #d8a4a1; background: var(--soft-red); }
+    .violet { border-color: #b9b0db; background: var(--soft-violet); }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 18px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 18px; }
+    .grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px; }
+    .flow-h {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px;
+    }
+    .flow-h .node {
+      border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+      padding: 12px 16px; flex: 1 1 140px; text-align: center; line-height: 1.4;
+    }
+    .flow-h .node strong { display: block; margin-bottom: 4px; }
+    .flow-h .arrow { color: var(--muted); font-size: 1.4rem; flex: 0 0 auto; }
+    .forbidden {
+      margin-top: 16px; border: 1px dashed var(--red); border-radius: var(--radius);
+      background: #fff8f7; padding: 14px 16px; color: var(--red); font-weight: 650; line-height: 1.55;
+    }
+    .allow {
+      margin-top: 16px; border: 1px solid var(--green); border-radius: var(--radius);
+      background: var(--soft-green); padding: 14px 16px; color: var(--green); font-weight: 650; line-height: 1.55;
+    }
+    .rule-list { display: grid; gap: 10px; margin-top: 14px; padding: 0; list-style: none; }
+    .rule-list li {
+      border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
+      padding: 12px 14px; line-height: 1.55; word-wrap: break-word; overflow-wrap: break-word;
+    }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; color: var(--muted); font-size: 0.92rem;
+    }
+    .legend span { border: 1px solid var(--line); border-radius: 999px; background: #fff; padding: 4px 10px; }
+    .matrix {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px;
+    }
+    .matrix .head { font-weight: 650; background: var(--soft-blue); padding: 8px 10px; border-radius: 4px; }
+    .matrix > div:not(.head) { padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 0.92rem; line-height: 1.5; }
+    table {
+      width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 0.92rem;
+    }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+    th { background: var(--soft-blue); font-weight: 650; }
+    .tag { display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 0.8rem; font-weight: 650; }
+    .tag-new { background: var(--soft-green); color: var(--green); }
+    .tag-mod { background: var(--soft-amber); color: var(--amber); }
+    .badge { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 650; }
+    .badge-blue { background: var(--soft-blue); color: var(--blue); }
+    .badge-green { background: var(--soft-green); color: var(--green); }
+    .badge-amber { background: var(--soft-amber); color: var(--amber); }
+    .badge-red { background: var(--soft-red); color: var(--red); }
+    .badge-violet { background: var(--soft-violet); color: var(--violet); }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky; top: 0; width: 260px; min-width: 260px; height: 100vh;
+      overflow-y: auto; padding: 32px 16px 32px 20px; border-right: 1px solid var(--line);
+      background: var(--surface); z-index: 50; scrollbar-width: thin;
+    }
+    .sidebar-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--ink);
+      font-weight: 760; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+    }
+    #sidebar-close {
+      display: none; border: none; background: none; cursor: pointer;
+      color: var(--muted); font-size: 1.2rem; padding: 2px 6px; border-radius: 4px; line-height: 1;
+    }
+    #sidebar-close:hover { background: var(--soft-blue); }
+    .sidebar nav ol { list-style: none; padding: 0; margin: 0; }
+    .sidebar nav li { margin: 0; }
+    .sidebar nav a {
+      display: block; padding: 5px 8px; border-radius: 6px; color: var(--ink);
+      text-decoration: none; font-size: 0.86rem; line-height: 1.35; transition: background 0.15s, color 0.15s;
+    }
+    .sidebar nav a:hover { background: var(--soft-blue); color: var(--blue); }
+    .sidebar nav a.active { background: var(--soft-blue); color: var(--blue); font-weight: 650; }
+    .sidebar nav .h3-link { padding-left: 22px; font-size: 0.8rem; color: var(--muted); }
+    .sidebar nav .h3-link:hover, .sidebar nav .h3-link.active { color: var(--blue); }
+    .sidebar nav .section-group { margin-bottom: 2px; }
+    .sidebar nav .section-group > ol { margin-bottom: 4px; }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(31, 41, 51, 0.25); z-index: 49;
+    }
+    #sidebar-open-btn {
+      display: none; position: fixed; bottom: 24px; right: 24px; z-index: 40;
+      width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line);
+      background: var(--surface); box-shadow: 0 2px 12px rgba(31, 41, 51, 0.15);
+      cursor: pointer; font-size: 1.3rem; align-items: center; justify-content: center;
+      color: var(--ink); transition: background 0.15s;
+    }
+    #sidebar-open-btn:hover { background: var(--soft-blue); }
+    @media (max-width: 1100px) {
+      .sidebar { position: fixed; left: -280px; top: 0; height: 100vh; transition: left 0.3s ease; box-shadow: 4px 0 24px rgba(31,41,51,0.12); }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay.open { display: block; }
+      #sidebar-close { display: block; }
+      #sidebar-open-btn { display: flex; }
+      .layout-wrapper { max-width: none; }
+    }
+    @media (max-width: 640px) {
+      .sidebar { width: 100%; min-width: 100%; left: -100%; }
+    }
+    @media (max-width: 700px) {
+      .matrix { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    /* Vertical flowchart */
+    .flow-v { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 18px; }
+    .flow-v .vnode {
+      border: 2px solid var(--line); border-radius: var(--radius); background: var(--surface);
+      padding: 10px 18px; text-align: center; line-height: 1.45; width: 100%; max-width: 420px;
+    }
+    .flow-v .vnode strong { display: block; margin-bottom: 3px; }
+    .flow-v .vnode span { font-size: 0.84rem; color: var(--muted); display: block; }
+    .flow-v .vnode code { font-size: 0.82rem; }
+    .flow-v .vnode-hard { border-color: var(--red); background: var(--soft-red); }
+    .flow-v .vnode-hard strong { color: var(--red); }
+    .flow-v .vnode-soft { border-color: var(--violet); background: var(--soft-violet); }
+    .flow-v .vnode-soft strong { color: var(--violet); }
+    .flow-v .vnode-action { border-color: var(--green); background: var(--soft-green); }
+    .flow-v .vnode-action strong { color: var(--green); }
+    .flow-v .vnode-loop { border-color: var(--amber); background: var(--soft-amber); border-style: dashed; }
+    .flow-v .vnode-loop strong { color: var(--amber); }
+    .flow-v .vnode-decision { border-color: var(--blue); background: var(--soft-blue); }
+    .flow-v .vnode-decision strong { color: var(--blue); }
+    .flow-v .vnode-wide { max-width: 520px; }
+    .flow-v .arrow-down { color: var(--muted); font-size: 1.15rem; line-height: 1; padding: 2px 0; }
+    .flow-v .branch-row {
+      display: flex; align-items: center; gap: 8px; width: 100%; max-width: 520px; justify-content: center;
+    }
+    .flow-v .branch-label {
+      border: 1px solid var(--red); border-radius: 4px; background: var(--soft-red);
+      padding: 3px 10px; font-size: 0.82rem; color: var(--red); font-weight: 650;
+    }
+    .flow-v .branch-label-ok {
+      border: 1px solid var(--green); border-radius: 4px; background: var(--soft-green);
+      padding: 3px 10px; font-size: 0.82rem; color: var(--green); font-weight: 650;
+    }
+    @media print {
+      body { background: #fff; }
+      .sidebar, .sidebar-overlay, #sidebar-open-btn { display: none !important; }
+      main { max-width: none; padding: 0; }
+      .diagram { box-shadow: none; break-inside: avoid; }
+      h2 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout-wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>On this page</span>
+      <button id="sidebar-close" aria-label="Close navigation">&times;</button>
+    </div>
+    <nav id="toc" aria-label="Table of contents"></nav>
+  </aside>
+  <main>
+    <header>
+      <p><code>ExpoNow</code> architecture guide &middot; v2</p>
+      <h1>A Bus Charging Scheduler Built for Clarity</h1>
+      <p class="lede">
+        ExpoNow is a Python + Streamlit application that schedules electric bus charging along
+        a fixed inter-city route. This document describes the system as it stands: how the code
+        is structured, why it is structured that way, and how each piece fits together.
+      </p>
+    </header>
+
+    <section aria-labelledby="what-it-does">
+      <h2 id="what-it-does">What It Does, Briefly</h2>
+      <p class="section-note">
+        A reviewer picks a scenario from a dropdown. The application loads route, station, and bus
+        data from a JSON file, validates it, runs a scheduling engine, and displays the resulting
+        bus timetables and station charging queues.
+      </p>
+      <div class="diagram">
+        <p>The scheduling problem is straightforward in concept and constrained in practice:</p>
+        <ul>
+          <li>A fleet of buses travels a fixed route from <strong>Bengaluru</strong> to
+            <strong>Kochi</strong> (or reverse), a 540 km corridor with four intermediate
+            charging stations: A, B, C, and D.</li>
+          <li>Each bus departs at a given time and must never exceed 240 km between charges.
+            Charging always takes exactly 25 minutes.</li>
+          <li>Each station has a limited number of charger lanes (currently 1 per station).
+            Two buses cannot occupy the same lane simultaneously.</li>
+          <li>The scheduler must pick which stations each bus stops at, in what order, and
+            assign charger reservations so that no constraints are violated. Among valid
+            schedules, it prefers those that minimise total wait time and keep the fleet
+            experience fair across operators.</li>
+        </ul>
+        <p>Five assignment scenarios encode different departure patterns — evenly spaced,
+          bunched starts, asymmetric fleet sizes, weighted operator fairness, and tight
+          departure windows. Each is a first-class JSON document.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="repo-layout">
+      <h2 id="repo-layout">Repository Layout</h2>
+      <p class="section-note">
+        The codebase is a standard Python project with a <code>src/</code> layout. Every
+        directory maps to a single architectural concern. No file straddles two layers.
+      </p>
+      <pre>ExpoNow/
+  app.py                    # Streamlit entry point (three function calls)
+  requirements.txt
+  data/
+    scenarios/              # Five JSON scenario files
+  src/
+    domain/                 # Pure data types: Scenario, Route, Bus, Weights, etc.
+    adapters/               # JSON loading, parsing, and validation
+    scheduler/              # Candidate generation, constraints, scoring, reservation management
+      strategies/           # Swappable scheduling algorithms
+    reporting/              # Table builders and metric aggregators (no Streamlit)
+    ui/                     # Streamlit rendering components
+  tests/                    # unittest suite (no external test runner needed)
+  docs/                     # Documentation</pre>
+    </section>
+
+    <section aria-labelledby="layered-architecture">
+      <h2 id="layered-architecture">Layered Architecture</h2>
+      <p class="section-note">
+        The system is organised as a set of concentric layers. The inner layers know nothing
+        about the outer layers. This makes every layer independently testable and replaceable.
+      </p>
+
+      <h3>Dependency Direction</h3>
+      <div class="diagram">
+        <div class="flow-h">
+          <div class="node green"><strong>Domain</strong><br><code>src/domain/</code></div>
+          <div class="arrow">&larr;</div>
+          <div class="node amber"><strong>Adapters</strong><br><code>src/adapters/</code></div>
+          <div class="arrow">&larr;</div>
+          <div class="node violet"><strong>Scheduler</strong><br><code>src/scheduler/</code></div>
+          <div class="arrow">&larr;</div>
+          <div class="node blue"><strong>UI &amp; Reporting</strong><br><code>src/ui/</code>, <code>src/reporting/</code></div>
+          <div class="arrow">&larr;</div>
+          <div class="node amber"><strong>Entry Point</strong><br><code>app.py</code></div>
+        </div>
+        <p style="margin-top:14px">Arrows point in the direction of <em>dependence</em>. The domain imports nothing from the project.
+          Adapters depend on the domain. The scheduler depends on the domain. Reporting depends on the domain
+          and the scheduler contracts. The UI depends on the domain, the scheduler, and reporting.
+          <code>app.py</code> wires everything together and calls Streamlit at the top level.</p>
+      </div>
+
+      <h3>What Each Layer Owns</h3>
+      <div class="diagram">
+        <div class="grid-auto">
+          <div class="card green"><strong>Domain</strong><span>Immutable data types: <code>Scenario</code>, <code>Route</code>, <code>Segment</code>, <code>Station</code>, <code>Bus</code>, <code>ChargingPolicy</code>, <code>TravelPolicy</code>, <code>Weights</code>. Pure helper functions for route navigation and time parsing. Zero framework imports.</span></div>
+          <div class="card amber"><strong>Adapters</strong><span>Read JSON files from <code>data/scenarios/</code>, parse them into <code>Scenario</code> objects, validate every field. Catch malformed data before it reaches the scheduler.</span></div>
+          <div class="card violet"><strong>Scheduler</strong><span>Generate charging stop candidates, enforce range and capacity constraints, assign station reservations, score schedules. Contains the algorithm; contains no I/O and no UI code.</span></div>
+          <div class="card blue"><strong>Reporting</strong><span>Transform <code>Scenario</code> and <code>ScheduleResult</code> objects into display-friendly dicts and Graphviz DOT strings. Pure data transformation without Streamlit.</span></div>
+          <div class="card amber"><strong>UI</strong><span>Streamlit rendering functions — one function per visual section. Import <code>streamlit</code> only inside function bodies so the module is importable without a runtime.</span></div>
+          <div class="card blue"><strong>Entry Point</strong><br><span><code>app.py</code> — three calls: select scenario, build view model, render. No business logic lives here.</span></div>
+        </div>
+      </div>
+
+      <h3>What the Architecture Forbids</h3>
+      <div class="diagram">
+        <div class="grid-2">
+          <div class="forbidden">
+            <strong>Domain must not import Streamlit, adapters, or scheduler code.</strong>
+            The domain is a pure model layer. If domain code ever references <code>st.</code>,
+            the layering contract is broken. A test scans every file in <code>src/domain/</code>
+            and fails on <code>import streamlit</code> or <code>from streamlit</code>.
+          </div>
+          <div class="forbidden">
+            <strong>Scheduler must not import Streamlit.</strong>
+            The scheduler runs the core algorithm. It should be runnable in a terminal, a test,
+            or a CI pipeline without a browser. A dedicated test (<code>test_scheduler_package_does_not_import_streamlit</code>)
+            enforces this by grepping source files.
+          </div>
+        </div>
+        <div class="forbidden" style="margin-top:14px">
+          <strong>Reporting must not import Streamlit.</strong>
+          The reporting layer produces data tables and diagram strings. Keeping it Streamlit-free
+          means the same functions can power a CLI, an API response, or a PDF export without changes.
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="data-flow">
+      <h2 id="data-flow">Data Flow: From File to Pixel</h2>
+      <p class="section-note">
+        The path a scenario takes from disk to the browser is linear and fully typed. At every
+        step, data passes through explicit, testable transformations.
+      </p>
+
+      <h3>End-to-End Pipeline</h3>
+      <div class="diagram">
+        <div class="flow-h">
+          <div class="node amber"><strong>JSON file</strong><br><code>data/scenarios/scenario_N.json</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node amber"><strong>scenario_loader.py</strong><br><code>load_scenario()</code><br>parse + build domain objects</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node green"><strong>Scenario</strong><br>typed, frozen, validated</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node violet"><strong>CustomHeuristicStrategy</strong><br><code>schedule(scenario)</code><br>&#8594; <code>ScheduleResult</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node blue"><strong>reporting/tables.py</strong><br>build timetable + queue rows</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node amber"><strong>ui/layout.py</strong><br>Streamlit renders tables</div>
+        </div>
+        <p style="margin-top:14px"><strong>Key property:</strong> no raw <code>dict</code> leaks past <code>scenario_loader.py</code>.
+          From the loader onward, every object is a typed dataclass that static analysis can verify.</p>
+      </div>
+
+      <h3>Validation Gate</h3>
+      <div class="diagram">
+        <p>Validation sits between loading and scheduling in <code>build_initial_view_model()</code>:</p>
+        <div class="flow-h">
+          <div class="node amber"><code>load_scenario()</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node red"><code>validate_scenario()</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node green">Valid? <strong>Schedule</strong></div>
+          <div class="node violet">Invalid? <strong>Show errors, skip scheduling</strong></div>
+        </div>
+        <p style="margin-top:14px">The validator checks metadata, route connectivity, station config, policy values,
+          weights, bus IDs, and directions. It returns <em>all</em> errors found, not just the first one,
+          so the user sees the full picture in a single pass.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="domain-models">
+      <h2 id="domain-models">Domain Models: The Nouns of the Problem</h2>
+      <p class="section-note">
+        Every entity in the scheduling problem is a frozen dataclass in <code>src/domain/models.py</code>.
+        Frozen dataclasses are immutable — once constructed, they never change. This eliminates
+        accidental mutation bugs and makes objects safe to share across threads.
+      </p>
+
+      <h3>Model Hierarchy</h3>
+      <div class="diagram">
+        <pre><code>Scenario              # Root aggregate — everything belongs to one scenario
+  schema_version      # int — for future format migrations
+  id, name, description
+  route               # Route
+    name              # str
+    stops             # list[str] — ["Bengaluru", "A", "B", "C", "D", "Kochi"]
+    segments          # list[Segment] — each has from_stop, to_stop, distance_km
+  stations            # list[Station] — each has id, charger_count
+  buses               # list[Bus] — each has id, operator, direction, departure_minutes
+  charging_policy     # ChargingPolicy — range_km (240), full_charge_minutes (25)
+  travel_policy       # TravelPolicy — speed_kmph (60)
+  weights             # Weights — individual, operator, overall (each defaults to 1.0)</code></pre>
+        <p>The 1:1 mapping between JSON keys and domain types means the loader is a
+          straightforward parse — not a complex transliteration layer.</p>
+      </div>
+
+      <h3>Why Immutability Matters Here</h3>
+      <div class="diagram">
+        <ul>
+          <li><strong>No accidental mutation.</strong> A function receiving a <code>Scenario</code>
+            cannot corrupt it for the caller. The scheduler reads the scenario; it never modifies it.</li>
+          <li><strong>Hashable.</strong> Frozen dataclasses can serve as dictionary keys or live in sets.</li>
+          <li><strong>Self-documenting.</strong> "This value never changes" is encoded in the type,
+            not in a comment.</li>
+          <li><strong>The trade-off</strong> — updating a frozen object requires constructing a new one.
+            The scheduler produces one result per run, so the cost is negligible.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="scheduler-engine">
+      <h2 id="scheduler-engine">Scheduler Engine</h2>
+      <p class="section-note">
+        The scheduler lives in <code>src/scheduler/</code> and is the heart of the application.
+        It implements a greedy heuristic: process buses in departure order, evaluate every
+        feasible charging-stop combination for each bus, pick the one that scores best, and
+        commit the required station reservations.
+      </p>
+
+      <h3>Architecture Within the Scheduler</h3>
+      <div class="diagram">
+        <p>The scheduler package is itself layered:</p>
+        <div class="grid-auto">
+          <div class="card violet"><strong><code>strategies/custom_heuristic.py</code></strong><span>Orchestrates the per-bus scheduling loop. For each bus, generates candidates, probes for available slots, scores options, commits the best one, and builds the timeline.</span></div>
+          <div class="card green"><strong><code>candidates.py</code></strong><span>Generates all feasible charging-stop combinations for a given direction and range. Uses itertools.combinations over intermediate stations and discards combos where any gap exceeds the battery range.</span></div>
+          <div class="card red"><strong><code>constraints.py</code></strong><span>Validates a completed schedule against hard rules: range never exceeded, route order preserved, no overlapping charger reservations, charge durations exact.</span></div>
+          <div class="card amber"><strong><code>reservations.py</code></strong><span><code>ReservationManager</code> — tracks per-lane occupied slots for each station. Provides <code>find_slot()</code> (probe without committing) and <code>commit_slot()</code> (irrevocable assignment).</span></div>
+          <div class="card blue"><strong><code>scoring.py</code></strong><span>Computes three weighted score components: individual wait (total bus wait minutes), operator smoothness (per-operator wait imbalance), and overall network (total fleet journey time). The score function registry is extensible by design.</span></div>
+          <div class="card green"><strong><code>contract.py</code></strong><span>Defines <code>SchedulerStrategy</code> (a Protocol), <code>ScheduleResult</code>, and all output types: <code>BusPlan</code>, <code>ChargingStop</code>, <code>TimelineEvent</code>, <code>StationReservation</code>, <code>ScheduleMetrics</code>, <code>ScoreBreakdown</code>.</span></div>
+        </div>
+      </div>
+
+      <h3>How a Single Bus Gets Scheduled</h3>
+      <div class="diagram">
+        <div class="flow-h">
+          <div class="node green"><strong>1. Sort buses</strong><br>by departure time</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node amber"><strong>2. Generate candidates</strong><br>enumerate feasible station combos</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node violet"><strong>3. Score each candidate</strong><br>probe reservation slots + compute weighted score</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node green"><strong>4. Pick best</strong><br>commit reservations + build timeline</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node blue"><strong>5. Emit BusPlan</strong><br>events + final arrival time</div>
+        </div>
+        <p style="margin-top:14px">After all buses are processed, the scheduler validates invariants on the complete result
+          (range, chronology, overlapping reservations). If any invariant fails, the result is
+          marked infeasible with the violations as warnings.</p>
+      </div>
+
+      <h3>Custom Heuristic: Full Algorithmic Flow</h3>
+      <div class="diagram">
+        <p>Every step <code>CustomHeuristicStrategy.schedule()</code> takes, showing where
+          <span class="badge badge-red">hard constraints</span> prune infeasible candidates
+          and <span class="badge badge-violet">soft constraints</span> select the best among
+          feasible ones.</p>
+
+        <div class="flow-v">
+
+          <div class="vnode vnode-action">
+            <strong>Sort buses</strong>
+            <span>by departure time (then bus ID tiebreaker)</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-loop">
+            <strong>FOR EACH BUS</strong>
+            <span>process one at a time in sorted order</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-action vnode-wide">
+            <strong>Generate candidates</strong>
+            <span><code>generate_candidates()</code> — <code>itertools.combinations</code> over
+              intermediate stations.<br>Hard filter: discard combos where any inter-stop gap
+              exceeds <code>range_km</code> (240).</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-loop">
+            <strong>FOR EACH CANDIDATE</strong>
+            <span>evaluate all feasible station-stop sequences</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-hard vnode-wide">
+            <strong>HARD CONSTRAINT — Probe all stations in candidate</strong>
+            <span>For each station:<br>
+              &bull; Compute <code>distance_between(prev_stop, station)</code> &rarr; travel time<br>
+              &bull; <code>reservation_mgr.find_slot(station, arrival, charge_duration)</code><br>
+              Hard: every station must have an available charger lane at arrival time.<br>
+              <strong>If any station has no slot &rarr; discard this candidate entirely.</strong>
+            </span>
+          </div>
+          <div class="branch-row">
+            <span class="branch-label">No slot &rarr; discard</span>
+            <span style="color:var(--muted)">or</span>
+            <span class="branch-label-ok">All slots found</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-soft vnode-wide">
+            <strong>SOFT CONSTRAINT — Score candidate</strong>
+            <span><code>_score_candidate()</code> computes weighted cost:<br>
+              &bull; <strong>Individual wait:</strong> sum of <code>slot.start - arrival_time</code>
+              across all stops<br>
+              &bull; <strong>Overall journey:</strong> <code>final_arrival - departure_minutes</code><br>
+              Weighted total = <code>w<sub>ind</sub> &times; wait + w<sub>overall</sub> &times; travel_time</code><br>
+              Track candidate with <strong>lowest score</strong> (best).</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-action vnode-wide">
+            <strong>Pick best candidate &rarr; Commit reservations</strong>
+            <span><code>reservation_mgr.commit_slot()</code> for each station.<br>
+              Hard guarantee: no two buses share the same lane at overlapping times.</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-action vnode-wide">
+            <strong>Build timeline &rarr; Emit BusPlan</strong>
+            <span><code>_build_bus_timeline()</code> — departure, travel, arrivals,
+              waits, charge start/end events in chronological order.</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-loop">
+            <strong>NEXT BUS</strong>
+            <span>repeat until all buses are scheduled</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-soft vnode-wide">
+            <strong>SOFT CONSTRAINT — Compute score breakdown</strong>
+            <span><code>compute_score_breakdown()</code> over the complete schedule:<br>
+              &bull; <strong>Individual wait:</strong> total fleet wait minutes<br>
+              &bull; <strong>Operator smoothness:</strong> per-operator wait imbalance penalty<br>
+              &bull; <strong>Overall network:</strong> sum of all bus journey times</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-hard vnode-wide">
+            <strong>HARD CONSTRAINT — Validate invariants</strong>
+            <span><code>validate_schedule_invariants()</code> checks:<br>
+              &bull; Battery range never exceeded at any segment<br>
+              &bull; No overlapping charger reservations per lane<br>
+              &bull; Timeline events are chronologically ordered<br>
+              &bull; Every charge event lasts exactly <code>full_charge_minutes</code><br>
+              <strong>If violations found &rarr; mark result <code>feasible=False</code></strong>
+              with warnings.</span>
+          </div>
+          <div class="branch-row">
+            <span class="branch-label">Violations &rarr; infeasible</span>
+            <span style="color:var(--muted)">or</span>
+            <span class="branch-label-ok">All pass &rarr; feasible</span>
+          </div>
+          <div class="arrow-down">&darr;</div>
+
+          <div class="vnode vnode-action">
+            <strong>Return ScheduleResult</strong>
+            <span>with bus plans, reservations, metrics, score breakdown, warnings</span>
+          </div>
+
+        </div>
+
+        <p style="margin-top:18px">
+          <span class="badge badge-red">Hard constraints</span> act as gates — candidates that fail
+          them are discarded and never scored. <span class="badge badge-violet">Soft constraints</span>
+          rank the remaining candidates; the one with the lowest weighted score is selected. This
+          two-phase approach guarantees that every output schedule satisfies all physical and
+          operational limits while still optimising for fleet efficiency and fairness.
+        </p>
+      </div>
+
+      <h3>Station Reservation Management</h3>
+      <div class="diagram">
+        <p>The <code>ReservationManager</code> (<code>src/scheduler/reservations.py</code>) is a
+          per-station, per-lane slot tracker:</p>
+        <ul>
+          <li><strong><code>find_slot(station, arrival, duration)</code></strong> — probes every lane at a station
+            and returns the earliest available slot that fits after the bus arrives. Does not commit.</li>
+          <li><strong><code>commit_slot(station, slot)</code></strong> — irrevocably books the slot.
+            Subsequent calls are aware of it.</li>
+          <li><strong><code>request(station, arrival, duration)</code></strong> — convenience that
+            calls find then commit.</li>
+        </ul>
+        <p>The scheduler uses <code>find_slot</code> during candidate evaluation (to score without
+          mutating state) and <code>commit_slot</code> only for the chosen candidate. This
+          probe-then-commit pattern is essential for correctness: if the scheduler modified state
+          during evaluation, bus ordering would produce non-deterministic results.</p>
+      </div>
+
+      <h3>The Strategy Protocol</h3>
+      <div class="diagram">
+        <p><code>SchedulerStrategy</code> is a <code>Protocol</code>, not an abstract base class.
+          Any class with a <code>schedule(self, scenario) -> ScheduleResult</code> method satisfies
+          the contract automatically — no inheritance, no registration, no conditional imports:</p>
+        <pre><code>class SchedulerStrategy(Protocol):
+    def schedule(self, scenario: Scenario) -> ScheduleResult:
+        ...</code></pre>
+        <p>This design makes it trivial to swap in a different solver (OR-Tools, Z3, a
+          deterministic algorithm). Each implementation lives in <code>src/scheduler/strategies/</code>
+          and is selected in <code>app_view_model.py</code> by changing one import.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="strategy-registry">
+      <h2 id="strategy-registry">Strategy Registry and Multi-Solver Architecture</h2>
+      <p class="section-note">
+        ExpoNow v2 introduces a strategy registry that decouples solver selection from the
+        application wiring. Users can switch between scheduling algorithms at runtime, and
+        new solvers can be added without touching the UI, orchestration, or domain layers.
+      </p>
+
+      <h3>How the Registry Works</h3>
+      <div class="diagram">
+        <p>The registry (<code>src/scheduler/strategies/registry.py</code>) maps strategy IDs to
+          option metadata and factory callables:</p>
+        <div class="grid-auto">
+          <div class="card green"><strong><code>StrategyOption</code></strong><span>Frozen dataclass with <code>id</code>, <code>label</code>, <code>description</code>, <code>is_experimental</code>, and <code>is_available</code>. Built at import time; the UI reads these fields to populate the solver dropdown.</span></div>
+          <div class="card violet"><strong><code>_StrategyRegistration</code></strong><span>Pairs an <code>option_factory</code> (lazy metadata) with a <code>strategy_factory</code> (lazy class constructor). Strategies are never instantiated until <code>get_strategy()</code> is called.</span></div>
+          <div class="card amber"><strong><code>list_strategy_options()</code></strong><span>Returns <code>StrategyOption</code> objects for every available strategy. Call with <code>include_unavailable=True</code> to inspect all registered strategies for diagnostics.</span></div>
+          <div class="card blue"><strong><code>get_strategy(id)</code></strong><span>Constructs and returns a <code>SchedulerStrategy</code> instance. Raises <code>ValueError</code> with a clear message for unknown IDs.</span></div>
+        </div>
+        <p style="margin-top:14px">The registry currently holds two strategies:</p>
+        <table>
+          <tr><th>ID</th><th>Label</th><th>Experimental?</th><th>Availability</th></tr>
+          <tr>
+            <td><code>custom_heuristic</code></td>
+            <td>Custom heuristic</td>
+            <td>No - the default</td>
+            <td>Always available</td>
+          </tr>
+          <tr>
+            <td><code>cp_sat</code></td>
+            <td>OR-Tools CP-SAT</td>
+            <td>Yes - optional dependency</td>
+            <td>Available when <code>ortools</code> is installed</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Runtime Strategy Selection</h3>
+      <div class="diagram">
+        <p>The selection flows through three layers without coupling any of them to a specific solver:</p>
+        <div class="flow-h">
+          <div class="node amber"><strong>UI</strong><br><code>render_strategy_selector()</code><br>dropdown from <code>list_strategy_options()</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node red"><strong>Orchestration</strong><br><code>build_initial_view_model()</code><br>calls <code>get_strategy(id)</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node violet"><strong>Registry</strong><br><code>get_strategy()</code><br>returns <code>SchedulerStrategy</code></div>
+          <div class="arrow">&#8594;</div>
+          <div class="node green"><strong>Solver</strong><br><code>strategy.schedule(scenario)</code><br>&#8594; <code>ScheduleResult</code></div>
+        </div>
+        <p style="margin-top:14px">The <code>SchedulerStrategy</code> protocol is the sole contract. Every solver -
+          greedy heuristic, CP-SAT, or a future algorithm - implements <code>schedule(scenario) -&gt; ScheduleResult</code>.
+          The orchestration layer never imports a specific strategy class; it only calls <code>get_strategy()</code>
+          with the ID the user selected.</p>
+      </div>
+
+      <h3>What the Registry Enables</h3>
+      <div class="diagram">
+        <ul>
+          <li><strong>No dead imports.</strong> CP-SAT imports <code>ortools</code> only inside the strategy
+            class, not at module level. When OR-Tools is absent, the registry still reports the option
+            as <code>is_available=False</code> - the code is importable, and the strategy politely returns
+            a warning result.</li>
+          <li><strong>Disjoint test surface.</strong> Each strategy has its own test file
+            (<code>test_cp_sat_strategy.py</code>, <code>test_strategy_registry.py</code>).
+            Integration tests loop over <code>list_strategy_options()</code> and verify that every
+            available strategy produces valid results for core scenarios.</li>
+          <li><strong>Zero UI changes when adding a solver.</strong> Register a new
+            <code>_StrategyRegistration</code>, and the solver dropdown populates automatically.
+            No layout or component code needs modification.</li>
+          <li><strong>Guaranteed diagnostic path.</strong> <code>list_strategy_options(include_unavailable=True)</code>
+            exposes every registered strategy - even those whose dependencies are missing - so
+            operators and tests can report <em>what could be available</em>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="cp-sat-strategy">
+      <h2 id="cp-sat-strategy">CP-SAT Strategy: Global Optimisation with Constraint Programming</h2>
+      <p class="section-note">
+        The CP-SAT strategy (<code>src/scheduler/strategies/cp_sat_strategy.py</code>) replaces the
+        greedy per-bus heuristic with a global constraint programming model solved by Google OR-Tools.
+        Instead of making irrevocable decisions bus-by-bus, it encodes the entire fleet's constraints
+        into a single mathematical model and lets the solver find a globally optimal assignment.
+      </p>
+
+      <h3>Greedy vs. Global: Why It Matters</h3>
+      <div class="diagram">
+        <div class="grid-2">
+          <div class="card amber">
+            <strong>Custom heuristic (greedy)</strong>
+            <span>Processes buses in departure order. Each bus picks its best candidate given
+              previously committed reservations. Early buses can block later ones from optimal
+              charging stops - a locally optimal choice may be globally suboptimal. Guarantees
+              feasibility but not optimality.</span>
+          </div>
+          <div class="card violet">
+            <strong>CP-SAT (global)</strong>
+            <span>Formulates the entire problem as one constraint satisfaction / optimisation
+              model. The solver explores the full decision space simultaneously - which buses
+              charge where, in what order, on which lane - and minimises the weighted cost
+              function. Can prove optimality or infeasibility, not just find a solution.</span>
+          </div>
+        </div>
+        <p style="margin-top:14px">Neither approach is categorically better. The heuristic is fast, deterministic, and
+          always available. CP-SAT trades runtime for proof of optimality and can escape local
+          minima that trap the greedy algorithm. The registry lets users pick the right tool for
+          the job at hand.</p>
+      </div>
+
+      <h3>Decision Variables</h3>
+      <div class="diagram">
+        <p>The CP-SAT model creates one set of variables per bus, per candidate, per stop:</p>
+        <table>
+          <tr><th>Variable</th><th>Type</th><th>Purpose</th></tr>
+          <tr><td><code>selected</code></td><td><code>BoolVar</code></td><td>Whether this candidate is the chosen charging plan for the bus. Exactly one candidate per bus must be selected.</td></tr>
+          <tr><td><code>start</code></td><td><code>IntVar(0, horizon)</code></td><td>Minute at which charging begins at this stop. Must be &ge; arrival time when the candidate is selected.</td></tr>
+          <tr><td><code>wait</code></td><td><code>IntVar(0, horizon)</code></td><td>Idle minutes between arrival and charge start: <code>wait = start - arrival</code>. Contributes to the objective.</td></tr>
+          <tr><td><code>lane_selectors</code></td><td><code>list[BoolVar]</code></td><td>One boolean per charger lane at the station. Exactly one lane is selected per stop when the candidate is active.</td></tr>
+          <tr><td><code>journey</code></td><td><code>IntVar(0, horizon)</code></td><td>Total journey time for the bus: <code>final_arrival - departure_minutes</code>. Contributes to the objective.</td></tr>
+        </table>
+        <p>Every variable is conditioned on <code>selected</code> using <code>OnlyEnforceIf</code>.
+          When a candidate is not selected, its variables are forced to zero (wait, journey) or
+          have their constraints deactivated (start, lane). This keeps the model sparse and
+          avoids explosion from irrelevant alternatives.</p>
+      </div>
+
+      <h3>Constraints: What the Solver Must Obey</h3>
+      <div class="diagram">
+        <ul class="rule-list">
+          <li><strong>One candidate per bus.</strong> <code>sum(selected) == 1</code> across all candidates for each bus. Every bus must have exactly one charging plan.</li>
+          <li><strong>Arrival sequencing.</strong> <code>start &ge; arrival</code> enforces that charging cannot begin before the bus reaches the station. Travel times are computed from segment distances and speed.</li>
+          <li><strong>Wait accounting.</strong> <code>wait = start - arrival</code> captures idle time at each stop. When <code>selected</code> is false, <code>wait</code> is forced to 0.</li>
+          <li><strong>Lane exclusivity.</strong> <code>sum(lane_selectors) == 1</code> per stop (one lane per charge event). Across all buses, <code>AddNoOverlap(intervals)</code> per lane ensures no two buses occupy the same charger simultaneously. Each charging interval is modeled as an <code>OptionalIntervalVar(start, duration, end, lane_selected)</code>.</li>
+          <li><strong>Journey accounting.</strong> <code>journey = (last_charge_end + final_travel) - departure</code> for each candidate. Contributes to the overall network score.</li>
+        </ul>
+      </div>
+
+      <h3>Objective Function</h3>
+      <div class="diagram">
+        <p>The solver minimises a weighted sum of two terms that mirror the scoring system:</p>
+        <pre><code>minimise: w_individual * sum(all wait terms)
+        + w_overall * sum(all journey terms)</code></pre>
+        <p>Weights come from the scenario's <code>weights</code> object and are scaled by a factor
+          of 1000 to preserve integer arithmetic (CP-SAT uses integer coefficients). The operator
+          smoothness component is <em>not</em> optimised directly by CP-SAT - it is computed
+          post-hoc by <code>finalize_schedule_result()</code>, which both strategies share.</p>
+      </div>
+
+      <h3>Solver Configuration and Time Budget</h3>
+      <div class="diagram">
+        <p>The solver is configured for a practical balance of speed and quality:</p>
+        <ul>
+          <li><strong>Time limit:</strong> <code>max_time_in_seconds = 60</code>. If the solver
+            cannot prove optimality within one minute, it returns the best feasible solution found
+            (marked <code>FEASIBLE</code>, not <code>OPTIMAL</code>).</li>
+          <li><strong>Single worker:</strong> <code>num_search_workers = 1</code>. With 20 buses
+            and up to dozens of candidates each, the model's decision space is large enough that
+            deterministic single-threaded search is preferred over parallel exploration with
+            non-deterministic results.</li>
+          <li><strong>Horizon:</strong> computed as <code>max_departure + route_time + serial_charge_time + 60</code>
+            minutes. This upper bound is generous enough to accommodate any feasible schedule
+            without making the integer variable domains unnecessarily large.</li>
+        </ul>
+      </div>
+
+      <h3>From Solver Solution to ScheduleResult</h3>
+      <div class="diagram">
+        <p>After the solver returns a feasible or optimal solution, <code>_decode_solution()</code>
+          extracts concrete values from the CP-SAT variable assignments:</p>
+        <div class="flow-h">
+          <div class="node green"><strong>1. Find selected candidate</strong><br>per bus: which <code>selected</code> var is 1</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node amber"><strong>2. Extract start times</strong><br><code>solver.Value(start)</code> per stop</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node violet"><strong>3. Extract lane assignments</strong><br>which <code>lane_selected</code> is 1</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node blue"><strong>4. Build StationReservations</strong><br>start, end, lane per stop</div>
+          <div class="arrow">&#8594;</div>
+          <div class="node green"><strong>5. Build BusPlans</strong><br>via shared <code>build_bus_timeline()</code></div>
+        </div>
+        <p style="margin-top:14px">The decoded result flows through <code>finalize_schedule_result()</code> - the same
+          shared pipeline that the custom heuristic uses. Metrics are computed, score breakdown
+          is added, and invariants are validated. Both strategies produce structurally identical
+          <code>ScheduleResult</code> objects.</p>
+      </div>
+
+      <h3>Status Handling and Diagnostics</h3>
+      <div class="diagram">
+        <p>The CP-SAT solver returns one of several status codes. The strategy maps each to
+          user-visible warnings:</p>
+        <table>
+          <tr><th>Status</th><th>Result</th><th>Warning</th></tr>
+          <tr>
+            <td><code>OPTIMAL</code></td>
+            <td><code>feasible=True</code></td>
+            <td>None - the solution is provably optimal</td>
+          </tr>
+          <tr>
+            <td><code>FEASIBLE</code></td>
+            <td><code>feasible=True</code></td>
+            <td>"CP-SAT found a feasible solution but did not prove optimality within 60 seconds"</td>
+          </tr>
+          <tr>
+            <td><code>INFEASIBLE</code></td>
+            <td><code>feasible=False</code></td>
+            <td>"CP-SAT proved the scenario infeasible"</td>
+          </tr>
+          <tr>
+            <td><code>MODEL_INVALID</code></td>
+            <td><code>feasible=False</code></td>
+            <td>"CP-SAT model is invalid"</td>
+          </tr>
+          <tr>
+            <td>Other / time limit</td>
+            <td><code>feasible=False</code></td>
+            <td>"CP-SAT did not find a solution before the limit"</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Shared Infrastructure Between Strategies</h3>
+      <div class="diagram">
+        <p>Both strategies reuse three modules that were extracted from the original
+          <code>custom_heuristic.py</code>:</p>
+        <div class="grid-auto">
+          <div class="card green"><strong><code>src/scheduler/timeline.py</code></strong><span><code>build_bus_timeline()</code> - constructs a <code>BusPlan</code> with chronologically ordered <code>TimelineEvent</code> objects (departure, travel, arrival, wait, charge start/end, final arrival). <code>compute_travel_minutes()</code> - converts distance + speed to minutes.</span></div>
+          <div class="card violet"><strong><code>src/scheduler/results.py</code></strong><span><code>finalize_schedule_result()</code> - computes metrics, adds score breakdown, validates invariants, and returns the final <code>ScheduleResult</code>. <code>compute_schedule_metrics()</code> - aggregates total wait and max wait across all reservations.</span></div>
+          <div class="card amber"><strong><code>src/scheduler/candidates.py</code></strong><span><code>generate_candidates()</code> - enumerates all range-feasible charging-stop combinations using <code>itertools.combinations</code>. Both strategies call this function; CP-SAT uses the candidates as the decision variable domain.</span></div>
+        </div>
+        <p style="margin-top:14px">This shared layer guarantees that both strategies produce identical output structures
+          and undergo the same invariant validation. Adding a third solver means implementing
+          <code>schedule(scenario)</code>, calling <code>generate_candidates()</code> and
+          <code>finalize_schedule_result()</code>, and registering it - the plumbing is done.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="scoring-objective">
+      <h2 id="scoring-objective">Scoring: How Good Schedules Are Ranked</h2>
+      <p class="section-note">
+        Among all feasible schedules, some are better than others. The scoring system assigns a
+        weighted numeric score to every <code>ScheduleResult</code>, letting the heuristic pick
+        the candidate that balances individual wait, operator fairness, and network efficiency.
+      </p>
+
+      <h3>The Three Components</h3>
+      <div class="diagram">
+        <div class="grid-auto">
+          <div class="card amber"><strong>Individual Wait</strong><span>Total wait minutes across all buses. A bus that waits 10 minutes at station A and 5 minutes at station B contributes 15 to this score. Lower is better.</span></div>
+          <div class="card violet"><strong>Operator Smoothness</strong><span>Penalises imbalance in average wait time across operators. If KPN buses average 8 minutes of wait and Freshbus averages 30, the score is the sum of absolute deviations from the fleet-wide mean. Lower means fairer.</span></div>
+          <div class="card green"><strong>Overall Network</strong><span>Sum of every bus's total journey time (departure to final arrival). Captures network-level congestion. Lower means the fleet finishes faster.</span></div>
+        </div>
+      </div>
+
+      <h3>Score Composition</h3>
+      <div class="diagram">
+        <p>Each component produces <code>unweighted</code>, <code>weight</code>, and <code>weighted</code>
+          values. The total score is the sum of weighted values:</p>
+        <pre><code>total_weighted = individual_weight * individual_unweighted
+               + operator_weight * operator_unweighted
+               + overall_weight * overall_unweighted</code></pre>
+        <p>Weights live in the scenario JSON (<code>weights.individual</code>,
+          <code>weights.operator</code>, <code>weights.overall</code>). Scenario 4 sets
+          <code>operator: 2.0</code> to test whether the scheduler responds to fairness pressure.
+          The score functions are registered in a dictionary (<code>SCORE_COMPONENTS</code>) so
+          adding a new dimension (e.g., <code>peak_hour_penalty</code>) means adding one function
+          and one entry to the registry — no other code changes.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="scenario-data">
+      <h2 id="scenario-data">Scenario Data</h2>
+      <p class="section-note">
+        Five JSON files under <code>data/scenarios/</code> encode every assignment scenario as
+        a self-contained document. Each file separates physical facts (route, stations, policies)
+        from the fleet schedule (buses) from tunable knobs (weights).
+      </p>
+
+      <h3>JSON Structure</h3>
+      <div class="diagram">
+        <p>Every scenario file follows the same skeleton:</p>
+        <pre><code>{
+  "schema_version": 1,
+  "id": "scenario_N",
+  "name": "Short title",
+  "description": "What this scenario tests",
+  "route": {
+    "name": "Bengaluru-Kochi",
+    "stops": ["Bengaluru", "A", "B", "C", "D", "Kochi"],
+    "segments": [
+      {"from": "Bengaluru", "to": "A", "distance_km": 100},
+      ...
+    ]
+  },
+  "stations": [
+    {"id": "A", "charger_count": 1},
+    ...
+  ],
+  "buses": [
+    {"id": "bus-BK-01", "operator": "kpn", "direction": "Bengaluru->Kochi", "departure": "19:00"},
+    ...
+  ],
+  "charging_policy": {"range_km": 240, "full_charge_minutes": 25},
+  "travel_policy": {"speed_kmph": 60},
+  "weights": {"individual": 1.0, "operator": 1.0, "overall": 1.0}
+}</code></pre>
+      </div>
+
+      <h3>What Each Scenario Tests</h3>
+      <div class="diagram">
+        <table>
+          <tr><th>Scenario</th><th>Name</th><th>Distinctive property</th></tr>
+          <tr><td>1</td><td>Evenly spaced</td><td>20 buses, 10 per direction, evenly spaced departures. The baseline case.</td></tr>
+          <tr><td>2</td><td>Bunched start</td><td>20 buses with clustered departures. Tests station contention at peak load.</td></tr>
+          <tr><td>3</td><td>Asymmetric</td><td>14 buses only — 10 one direction, 4 the other. Tests uneven directional load.</td></tr>
+          <tr><td>4</td><td>Operator fairness</td><td><code>weights.operator = 2.0</code>. All other weights remain at 1.0. Tests the scoring system's response to fairness pressure.</td></tr>
+          <tr><td>5</td><td>Compressed window</td><td>All 20 departures fit within 72 minutes (19:00–20:12). Tests extreme contention.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="entry-point-orchestration">
+      <h2 id="entry-point-orchestration">Entry Point and Orchestration</h2>
+      <p class="section-note">
+        <code>app.py</code> is deliberately minimal. All wiring lives in
+        <code>src/app_view_model.py</code>, which returns a frozen <code>InitialViewModel</code>
+        dataclass containing everything the UI needs.
+      </p>
+
+      <h3>The View Model Pattern</h3>
+      <div class="diagram">
+        <p><code>app.py</code> does three things:</p>
+        <pre><code>def main():
+    scenarios = list_scenario_summaries()
+    selected_scenario_id = render_scenario_selector(scenarios)
+    view_model = _get_cached_view_model(selected_scenario_id)
+    render_input_view(view_model)
+    if not view_model.validation_errors:
+        render_schedule_output(view_model.schedule_result)</code></pre>
+        <p><code>build_initial_view_model()</code> does the heavy lifting: loads the scenario,
+          validates it, runs the scheduler (if valid), and bundles everything into an
+          <code>InitialViewModel</code>. This separation means:</p>
+        <ul>
+          <li><strong>The orchestration function is testable without a browser.</strong>
+            A test can call <code>build_initial_view_model("scenario_1")</code> and inspect
+            the returned <code>InitialViewModel</code> — no Streamlit runtime required.</li>
+          <li><strong>The UI functions are pure rendering.</strong> They receive data and produce
+            markup. No business logic, no data loading, no side effects.</li>
+          <li><strong>Changes to the UI never break the data pipeline.</strong></li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="reporting-and-ui">
+      <h2 id="reporting-and-ui">Reporting and UI</h2>
+      <p class="section-note">
+        The reporting layer and UI layer have a clean division: reporting builds data structures,
+        the UI renders them. Reporting knows nothing about Streamlit; the UI knows nothing about
+        the domain models' internals.
+      </p>
+
+      <h3>Reporting Layer (<code>src/reporting/</code>)</h3>
+      <div class="diagram">
+        <p><code>tables.py</code> transforms <code>Scenario</code> and <code>ScheduleResult</code>
+          objects into lists of dicts — each one ready to become a table row:</p>
+        <ul>
+          <li><code>build_summary_rows(scenario)</code> — ID, name, description, distance, bus count</li>
+          <li><code>build_route_diagram_dot(scenario)</code> — Graphviz DOT source for route visualisation</li>
+          <li><code>build_route_table(scenario)</code> — per-segment from/to/distance</li>
+          <li><code>build_station_table(scenario)</code> — station ID and charger count</li>
+          <li><code>build_bus_departure_table(scenario)</code> — bus ID, operator, direction, departure time</li>
+          <li><code>build_bus_timetable_rows(result)</code> — full per-stop charging schedule for every bus</li>
+          <li><code>build_station_queue_rows(result)</code> — per-station charging order grouped by station</li>
+        </ul>
+        <p><code>metrics.py</code> builds summary metrics and score breakdown rows from
+          <code>ScheduleResult</code>.</p>
+      </div>
+
+      <h3>UI Layer (<code>src/ui/</code>)</h3>
+      <div class="diagram">
+        <p><code>components.py</code> contains one Streamlit rendering function per visual section.
+          Each function imports <code>streamlit</code> inside its body (never at module level):</p>
+        <ul>
+          <li><code>render_scenario_summary_table</code>, <code>render_route_diagram</code>,
+            <code>render_route_table</code>, <code>render_station_table</code>,
+            <code>render_policy_table</code>, <code>render_weight_table</code>,
+            <code>render_bus_departure_table</code> — input display</li>
+          <li><code>render_validation_errors</code> — error block when validation fails</li>
+          <li><code>render_bus_timetable</code>, <code>render_station_queues</code>,
+            <code>render_schedule_metrics</code>, <code>render_score_breakdown</code> — output display</li>
+          <li><code>render_infeasible_message</code> — fallback when scheduling fails</li>
+        </ul>
+        <p><code>layout.py</code> orchestrates the rendering pipeline — calls reporting functions
+          to get data, then calls component functions to render it.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="testing">
+      <h2 id="testing">Testing Strategy</h2>
+      <p class="section-note">
+        The test suite uses Python's built-in <code>unittest</code> framework. No external test
+        runner, no browser, no network. Run all tests with <code>python -m unittest discover -s tests</code>.
+      </p>
+
+      <h3>Test Categories</h3>
+      <div class="diagram">
+        <div class="grid-2">
+          <div class="card green">
+            <strong>Domain and helpers</strong>
+            <ul class="rule-list">
+              <li>Time parsing: <code>parse_hhmm</code> and <code>format_minutes</code> round-trip and reject invalid input.</li>
+              <li>Route helpers: direction-aware stop ordering, total distance (540 km), segment distances, <code>distance_between</code>.</li>
+              <li>Domain models: construction, default values, frozen immutability.</li>
+              <li>Schedule contracts: <code>BusPlan</code>, <code>ChargingStop</code>, <code>ScoreBreakdown</code>, typed result.</li>
+            </ul>
+          </div>
+          <div class="card red">
+            <strong>Constraints and invariants</strong>
+            <ul class="rule-list">
+              <li>Range constraint: exact boundary allowed, over-range rejected, reverse direction.</li>
+              <li>Route order: valid direction, invalid direction, consecutive duplicate stop.</li>
+              <li>Complete schedule invariants: range violations, overlapping reservations, chronological order, charge duration.</li>
+              <li>Reservation manager: single charger serialisation, parallel lanes, gap-filling.</li>
+            </ul>
+          </div>
+          <div class="card violet">
+            <strong>Scheduler integration</strong>
+            <ul class="rule-list">
+              <li>All five assignment scenarios produce feasible results with zero invariant violations.</li>
+              <li>Impossible scenarios (range too short) correctly produce infeasible results.</li>
+              <li>Score breakdown components are present and populated with correct weights.</li>
+              <li>Weight changes affect weighted total without changing hard feasibility.</li>
+              <li>Scenario 4's operator weight of 2.0 is properly threaded through.</li>
+            </ul>
+          </div>
+          <div class="card blue">
+            <strong>Architecture enforcement</strong>
+            <ul class="rule-list">
+              <li>Scheduler package does not import Streamlit (grep-based test).</li>
+              <li>Orchestration imports without triggering Streamlit side effects.</li>
+              <li>Reporting package does not import Streamlit.</li>
+              <li>Validator accepts all five assignment scenarios, rejects malformed input.</li>
+              <li>Edge-case fixtures: exact range, impossible range, simultaneous arrivals, multi-operator.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="extensibility">
+      <h2 id="extensibility">Extensibility</h2>
+      <p class="section-note">
+        The architecture is designed so that common future changes require data edits or small
+        module additions — never rewrites.
+      </p>
+
+      <h3>Change Matrix</h3>
+      <div class="diagram">
+        <table>
+          <tr><th>Change</th><th>What it takes</th></tr>
+          <tr><td>New scenario</td><td>Create a new JSON file in <code>data/scenarios/</code>. The catalog discovers files by filename convention.</td></tr>
+          <tr><td>New station</td><td>Add a station entry to the JSON and update route segments. Data-only.</td></tr>
+          <tr><td>Multiple chargers at a station</td><td>Change <code>charger_count</code> in the station object. The <code>ReservationManager</code> already supports per-lane scheduling.</td></tr>
+          <tr><td>New operator</td><td>Write the operator name in bus data. Operators are free-text strings.</td></tr>
+          <tr><td>New scoring rule</td><td>Write one scoring function, register it in <code>SCORE_COMPONENTS</code>, add its weight to the scenario JSON.</td></tr>
+          <tr><td>New scheduling algorithm</td><td>Create a class with a <code>schedule(scenario)</code> method in <code>strategies/</code>. Swap the import in <code>app_view_model.py</code>.</td></tr>
+          <tr><td>Variable battery range per bus</td><td>Add <code>range_km</code> to the bus object in JSON; the scheduler reads per-bus range with a policy default fallback.</td></tr>
+          <tr><td>Different charge time per station</td><td>Add <code>charge_minutes</code> to the station object in JSON; the scheduler uses it with a policy default fallback.</td></tr>
+          <tr><td>Replace Streamlit with CLI</td><td>Rewrite <code>src/ui/</code> and <code>app.py</code>. Domain, adapters, scheduler, and reporting remain untouched.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="development-patterns">
+      <h2 id="development-patterns">Development Patterns You Will Find Here</h2>
+      <p class="section-note">
+        Beyond the architecture, the codebase demonstrates several Python design patterns worth
+        recognising. They appear across multiple files and are ready to reuse.
+      </p>
+      <div class="diagram">
+        <div class="grid-auto">
+          <div class="card green"><strong>Frozen dataclasses as default</strong><span>Every data type is <code>@dataclass(frozen=True)</code>. Before adding a setter, ask "can this be immutable?" The answer is almost always yes.</span></div>
+          <div class="card violet"><strong>Protocol over ABC</strong><span><code>SchedulerStrategy</code> is a Protocol, not an abstract base class. Structural typing means implementations don't need to inherit from the base — they just need the right method signature.</span></div>
+          <div class="card blue"><strong>Lazy Streamlit imports</strong><span>UI components import <code>streamlit</code> inside function bodies. The module is importable without a Streamlit runtime, which is essential for testing.</span></div>
+          <div class="card amber"><strong>Grep-based architecture tests</strong><span>Tests that scan source files for forbidden imports are cheaper and more reliable than code review comments. They run in CI and fail the build.</span></div>
+          <div class="card red"><strong>View model keeps app.py thin</strong><span>Business logic lives in <code>build_initial_view_model()</code>, not in <code>app.py</code>. The entry point orchestrates, it does not compute.</span></div>
+          <div class="card green"><strong>Explicit public API</strong><span>Package <code>__init__.py</code> files use <code>__all__</code>. Consumers import from the package (<code>from src.domain import Scenario</code>) rather than from specific modules.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="reading-guide">
+      <h2 id="reading-guide">Reading the Codebase</h2>
+      <p class="section-note">
+        If you are new to the project, follow this order to build a complete mental model.
+      </p>
+      <div class="diagram">
+        <ol>
+          <li><strong><code>src/domain/models.py</code></strong> — The nouns. Read the 7 frozen dataclasses. Everything else references these types.</li>
+          <li><strong><code>src/domain/route.py</code></strong> — How route navigation works: direction-aware stop ordering, distance calculations.</li>
+          <li><strong><code>src/domain/time.py</code></strong> — How time is represented: <code>"HH:MM"</code> to minutes-since-midnight and back.</li>
+          <li><strong><code>src/scheduler/contract.py</code></strong> — The output types: <code>ScheduleResult</code>, <code>BusPlan</code>, <code>ScoreBreakdown</code>, and the <code>SchedulerStrategy</code> protocol.</li>
+          <li><strong><code>src/scheduler/candidates.py</code></strong> — How feasible charging-stop combinations are generated.</li>
+          <li><strong><code>src/scheduler/reservations.py</code></strong> — How station charger lanes are managed.</li>
+          <li><strong><code>src/scheduler/strategies/custom_heuristic.py</code></strong> — The full scheduling algorithm, end to end.</li>
+          <li><strong><code>src/scheduler/scoring.py</code></strong> — How schedules are scored and ranked.</li>
+          <li><strong><code>src/scheduler/constraints.py</code></strong> — How a completed schedule is validated against hard rules.</li>
+          <li><strong><code>src/adapters/scenario_loader.py</code></strong> — How JSON becomes a typed <code>Scenario</code>.</li>
+          <li><strong><code>src/adapters/scenario_validator.py</code></strong> — How input is checked before scheduling.</li>
+          <li><strong><code>src/adapters/scenario_catalog.py</code></strong> — How the scenario list is discovered.</li>
+          <li><strong><code>src/app_view_model.py</code></strong> — The orchestration that wires loading, validation, and scheduling.</li>
+          <li><strong><code>src/reporting/tables.py</code></strong> — How domain objects become display data.</li>
+          <li><strong><code>src/ui/components.py</code></strong> and <strong><code>layout.py</code></strong> — How display data becomes pixels.</li>
+          <li><strong><code>app.py</code></strong> — The thin entry point. By now, everything it does is familiar.</li>
+          <li><strong><code>tests/</code></strong> — The tests document the contract and enforce the architecture.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section aria-labelledby="architectural-summary">
+      <h2 id="architectural-summary">In One Paragraph</h2>
+      <div class="diagram">
+        <p>
+          ExpoNow is a layered Python application where the domain knows nothing about Streamlit,
+          the scheduler knows nothing about I/O, and the UI knows nothing about scheduling logic.
+          Data flows through explicit typed contracts: JSON → validated <code>Scenario</code> →
+          scheduling algorithm → <code>ScheduleResult</code> → reporting tables → Streamlit widgets.
+          Every layer is independently testable, and architecture boundaries are enforced by
+          automated tests that scan for forbidden imports. The design prioritises clarity over
+          cleverness — each file has one job, each function has one purpose, and the path from
+          input to output is linear and inspectable at every step.
+        </p>
+      </div>
+    </section>
+
+    <section aria-labelledby="layer-contracts">
+      <h2 id="layer-contracts">Layer Contracts</h2>
+      <p class="section-note">
+        Every architectural boundary in ExpoNow is defined by an explicit contract: the data types
+        that cross it, what the provider guarantees, and what the consumer can assume. These contracts
+        are the seams at which each layer can be extracted, mocked, tested, and handed over independently.
+      </p>
+
+      <h3>Contract Matrix</h3>
+      <div class="diagram">
+        <table>
+          <tr><th>#</th><th>Boundary</th><th>Provider</th><th>Consumer</th><th>Data crossing</th><th>Guarantee</th></tr>
+          <tr>
+            <td>1</td>
+            <td><strong>Adapters &#8594; System</strong></td>
+            <td><code>src/adapters/</code></td>
+            <td><code>app_view_model.py</code></td>
+            <td><code>Scenario</code>, <code>ScenarioSummary</code>, <code>list[str]</code></td>
+            <td>No raw dicts leak past. Every returned value is a typed dataclass or plain list.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Scheduler &#8594; System</strong></td>
+            <td><code>src/scheduler/</code></td>
+            <td><code>app_view_model.py</code>, <code>src/reporting/</code></td>
+            <td><code>ScheduleResult</code>, <code>BusPlan</code>, <code>StationReservation</code>, <code>ScheduleMetrics</code>, <code>ScoreBreakdown</code></td>
+            <td>Never mutates input <code>Scenario</code>. No I/O. No framework imports.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Reporting &#8594; UI</strong></td>
+            <td><code>src/reporting/</code></td>
+            <td><code>src/ui/</code></td>
+            <td><code>list[dict]</code>, <code>dict[str, list[dict]]</code>, <code>str</code></td>
+            <td>Pure functions — no side effects, no I/O, no Streamlit.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Orchestration &#8594; UI</strong></td>
+            <td><code>app_view_model.py</code></td>
+            <td><code>src/ui/layout.py</code>, <code>app.py</code></td>
+            <td><code>InitialViewModel</code> (frozen dataclass)</td>
+            <td>View model is fully populated before UI code runs. No business logic in rendering.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>Domain &#8594; All layers</strong></td>
+            <td><code>src/domain/</code></td>
+            <td>All other layers</td>
+            <td><code>Scenario</code>, <code>Route</code>, <code>Bus</code>, <code>Station</code>, <code>Segment</code>, <code>ChargingPolicy</code>, <code>TravelPolicy</code>, <code>Weights</code></td>
+            <td>Zero imports from the rest of the project. Immutable frozen dataclasses.</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Boundary 1: Adapters &#8594; Rest of System</h3>
+      <div class="diagram">
+        <p>The adapter layer is the only code that touches the file system or raw JSON. Its contract with the rest of the system is one-way: it delivers typed, validated domain objects.</p>
+        <div class="grid-2">
+          <div class="card green">
+            <strong>Provider guarantees</strong>
+            <ul class="rule-list">
+              <li><code>load_scenario(id)</code> always returns a valid <code>Scenario</code> or raises a typed <code>AdapterError</code> subclass — never a bare <code>FileNotFoundError</code> or <code>json.JSONDecodeError</code>.</li>
+              <li><code>validate_scenario(scenario)</code> returns ALL validation errors in one pass, never fails fast after the first issue.</li>
+              <li><code>discover_scenario_ids()</code> returns all <code>scenario_*.json</code> files found — the catalog is data-driven, not hardcoded.</li>
+              <li>No raw <code>dict</code> objects escape from this package. Every public function returns typed domain objects or plain <code>list[str]</code>.</li>
+            </ul>
+          </div>
+          <div class="card amber">
+            <strong>Consumer expectations</strong>
+            <ul class="rule-list">
+              <li>Consumers call <code>load_scenario()</code> with a valid scenario ID obtained from <code>discover_scenario_ids()</code> or <code>list_scenario_summaries()</code>.</li>
+              <li>Consumers are responsible for calling <code>validate_scenario()</code> after loading, before scheduling.</li>
+              <li>Consumers handle <code>ScenarioNotFoundError</code> and <code>MalformedScenarioError</code> gracefully — typically by showing an error message in the UI.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="allow">
+          <strong>Test seam:</strong> Mock the file system via a temp directory with known JSON fixtures. Test that every adapter function returns correct types. Test that malformed JSON, missing fields, and unknown scenario IDs produce the right typed errors. All five real scenario files must load and validate without errors.
+        </div>
+      </div>
+
+      <h3>Boundary 2: Scheduler &#8594; Rest of System</h3>
+      <div class="diagram">
+        <p>The scheduler is the algorithmic core. Its contract separates scheduling logic from everything else — the scheduler never touches I/O, never imports Streamlit, and never mutates the input scenario.</p>
+        <div class="grid-2">
+          <div class="card violet">
+            <strong>Provider guarantees</strong>
+            <ul class="rule-list">
+              <li><code>SchedulerStrategy.schedule(scenario)</code> accepts a <code>Scenario</code> and always returns a <code>ScheduleResult</code> — even if the scenario is impossible (result is marked <code>feasible=False</code> with warnings).</li>
+              <li>The input <code>Scenario</code> is never modified. The scheduler is a pure function from <code>Scenario &#8594; ScheduleResult</code>.</li>
+              <li>Every <code>BusPlan</code> contains chronologically ordered <code>TimelineEvent</code> objects. Every <code>StationReservation</code> has non-overlapping time ranges per lane.</li>
+              <li>The result is validated against hard invariants via <code>validate_schedule_invariants</code> before being returned. Violations appear as warnings, not exceptions.</li>
+            </ul>
+          </div>
+          <div class="card green">
+            <strong>Consumer expectations</strong>
+            <ul class="rule-list">
+              <li>Consumers pass a fully validated <code>Scenario</code>. The scheduler does not re-validate domain data — it assumes the adapters layer has done its job.</li>
+              <li>Consumers check <code>result.feasible</code> before interpreting bus plans or metrics. An infeasible result has empty <code>bus_plans</code> and <code>station_reservations</code>.</li>
+              <li>Consumers read <code>result.score_breakdown</code> to understand schedule quality. The breakdown is <code>None</code> for infeasible results.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="allow">
+          <strong>Test seam:</strong> The <code>SchedulerStrategy</code> protocol is the seam. Write a mock strategy that returns a known <code>ScheduleResult</code> to test downstream consumers (reporting, UI) without running the full algorithm. Test the real strategy against all five scenario files — each must produce a feasible result with zero invariant violations.
+        </div>
+      </div>
+
+      <h3>Boundary 3: Reporting &#8594; UI</h3>
+      <div class="diagram">
+        <p>Reporting is a pure transformation layer. It turns domain objects and scheduler results into display-friendly dicts. The UI never calls reporting functions with business logic intent — it calls them to get data for rendering.</p>
+        <div class="grid-2">
+          <div class="card blue">
+            <strong>Provider guarantees</strong>
+            <ul class="rule-list">
+              <li>Every function returns built-in Python types (<code>list[dict]</code>, <code>dict</code>, <code>str</code>) — no custom classes, no dataclasses, no framework types.</li>
+              <li>Every dict has a consistent, documented set of keys. Consumers can rely on <code>row["Field"]</code>, <code>row["Value"]</code>, etc. being present.</li>
+              <li>All functions are pure: no I/O, no state, no Streamlit imports. The same input always produces the same output.</li>
+              <li>Functions accept only domain and scheduler contract types — never raw JSON or <code>dict</code> from the file system.</li>
+            </ul>
+          </div>
+          <div class="card amber">
+            <strong>Consumer expectations</strong>
+            <ul class="rule-list">
+              <li>Consumers pass fully constructed <code>Scenario</code> and <code>ScheduleResult</code> objects. Reporting does not tolerate <code>None</code> for required fields.</li>
+              <li>Consumers treat the returned dicts as opaque display data — they format, order, style, and translate them without inspecting business meaning.</li>
+              <li>Consumers are free to iterate, filter, or augment the dicts for rendering purposes (e.g., adding Streamlit column config, colour coding).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="allow">
+          <strong>Test seam:</strong> Reporting functions are the easiest to test — pure functions, no mocking needed. Test that each function returns the correct number of rows, that dict keys match the UI's expectations, and that edge cases (empty results, single-bus scenarios) produce valid output. A grep-based architecture test (<code>test_reporting_package_does_not_import_streamlit</code>) enforces the Streamlit ban.
+        </div>
+      </div>
+
+      <h3>Boundary 4: Orchestration &#8594; UI + Entry Point</h3>
+      <div class="diagram">
+        <p>The orchestration layer (<code>app_view_model.py</code>) is the single point where all data flows converge. It produces a frozen <code>InitialViewModel</code> dataclass that contains everything the UI needs — no lazy loading, no callbacks, no deferred computation.</p>
+        <div class="grid-2">
+          <div class="card red">
+            <strong>Provider guarantees</strong>
+            <ul class="rule-list">
+              <li><code>build_initial_view_model(selected_scenario_id)</code> always returns a fully populated <code>InitialViewModel</code> — even if loading, validation, or scheduling fails.</li>
+              <li>The <code>InitialViewModel</code> contains the loaded <code>Scenario</code>, all validation errors (if any), the full <code>ScheduleResult</code> (if scheduling ran), and the scenario summary list.</li>
+              <li>No business logic is deferred. When the view model is returned, every decision has been made — the UI only renders.</li>
+              <li>The function is deterministic for a given scenario ID (unless the JSON file changes).</li>
+            </ul>
+          </div>
+          <div class="card green">
+            <strong>Consumer expectations</strong>
+            <ul class="rule-list">
+              <li><code>app.py</code> calls <code>build_initial_view_model()</code> on startup and caches the result (<code>@st.cache_data</code>). It never calls adapters or the scheduler directly.</li>
+              <li><code>src/ui/layout.py</code> receives the <code>InitialViewModel</code> and destructures it. It checks <code>view_model.validation_errors</code> to decide whether to show schedule output.</li>
+              <li>UI functions never re-build domain objects, re-run validation, or re-schedule. They render what the view model gives them.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="allow">
+          <strong>Test seam:</strong> <code>build_initial_view_model()</code> can be called without Streamlit — it returns a plain dataclass. Integration tests call this function with each of the five scenario IDs and verify that the returned <code>InitialViewModel</code> has no validation errors, a feasible schedule result, and populated metrics. This single function is the highest-value test in the suite.
+        </div>
+      </div>
+
+      <h3>Boundary 5: Domain &#8594; All Layers</h3>
+      <div class="diagram">
+        <p>The domain layer is the foundation. Every other layer depends on its types. The contract here is about what the domain does <em>not</em> do — it enforces the inward dependency rule that makes the architecture work.</p>
+        <div class="grid-2">
+          <div class="card green">
+            <strong>Provider guarantees</strong>
+            <ul class="rule-list">
+              <li>All domain types are frozen (<code>@dataclass(frozen=True)</code>). Once constructed, they are immutable and hashable.</li>
+              <li>Domain types contain zero references to any other layer — no Streamlit, no scheduler, no adapters, no reporting. A grep for <code>import streamlit</code> across the entire <code>src/domain/</code> directory must return zero matches.</li>
+              <li>Helper functions (<code>parse_hhmm</code>, <code>format_minutes</code>, <code>distance_between</code>, <code>get_ordered_stops</code>, <code>total_distance</code>, <code>segment_distances</code>) are pure and raise only standard Python exceptions (<code>ValueError</code>).</li>
+              <li>Default values exist for policies and weights (<code>range_km=240</code>, <code>full_charge_minutes=25</code>, <code>speed_kmph=60</code>, weights default to 1.0). A partial JSON can produce a valid scenario with sensible defaults.</li>
+            </ul>
+          </div>
+          <div class="card violet">
+            <strong>Consumer obligations</strong>
+            <ul class="rule-list">
+              <li>Every layer constructs domain types only via their constructors — no subclassing, no monkey-patching, no <code>__dict__</code> manipulation.</li>
+              <li>No layer stores domain objects in mutable containers that would allow accidental modification.</li>
+              <li>Every layer treats domain objects as opaque data carriers. Business logic processes them; it does not extend them.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="allow">
+          <strong>Test seam:</strong> The domain layer is trivially testable — construct objects and verify field values, test helper functions with known inputs. An architecture-enforcement test scans every file in <code>src/domain/</code> for forbidden imports and fails the build if any are found.
+        </div>
+      </div>
+
+      <h3>Contract Enforcement Summary</h3>
+      <div class="diagram">
+        <p>These contracts are not just documentation — they are enforced by automated tests:</p>
+        <table>
+          <tr><th>Rule</th><th>Enforcement</th></tr>
+          <tr><td>Domain must not import Streamlit</td><td>Grep-based test scans <code>src/domain/</code> for <code>import streamlit</code></td></tr>
+          <tr><td>Scheduler must not import Streamlit</td><td><code>test_scheduler_package_does_not_import_streamlit</code></td></tr>
+          <tr><td>Reporting must not import Streamlit</td><td><code>test_reporting_package_does_not_import_streamlit</code></td></tr>
+          <tr><td>All five assignment scenarios produce feasible results</td><td>Integration tests call <code>build_initial_view_model("scenario_N")</code> for N=1..5</td></tr>
+          <tr><td>Malformed input is rejected before scheduling</td><td>Validator tests with intentionally broken JSON fixtures</td></tr>
+          <tr><td>Schedule invariants hold at every layer boundary</td><td><code>validate_schedule_invariants</code> called at the end of every scheduler run and in tests</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <p style="margin-top:40px; color:var(--muted); font-size:0.85rem; border-top:1px solid var(--line); padding-top:16px;">
+      ExpoNow — v2 architecture guide. Corresponds to the current state of <code>main</code>.
+    </p>
+  </main>
+</div>
+
+<button id="sidebar-open-btn" aria-label="Open navigation">&#9776;</button>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<script>
+(function() {
+  const toc = document.getElementById('toc');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const closeBtn = document.getElementById('sidebar-close');
+  const openBtn = document.getElementById('sidebar-open-btn');
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+  }
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (openBtn) openBtn.addEventListener('click', openSidebar);
+  if (overlay) overlay.addEventListener('click', closeSidebar);
+
+  const headings = document.querySelectorAll('main h2, main h3');
+  const ol = document.createElement('ol');
+  let currentSectionLi = null;
+  let currentSubOl = null;
+
+  headings.forEach(function(h) {
+    if (!h.id) return;
+    if (h.tagName === 'H2') {
+      if (currentSubOl) {
+        currentSectionLi.appendChild(currentSubOl);
+        currentSubOl = null;
+      }
+      const li = document.createElement('li');
+      li.className = 'section-group';
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      ol.appendChild(li);
+      currentSectionLi = li;
+    } else if (h.tagName === 'H3' && currentSectionLi) {
+      if (!currentSubOl) {
+        currentSubOl = document.createElement('ol');
+      }
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.className = 'h3-link';
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      currentSubOl.appendChild(li);
+    }
+  });
+  if (currentSubOl && currentSectionLi) {
+    currentSectionLi.appendChild(currentSubOl);
+  }
+  toc.appendChild(ol);
+
+  // Active link highlighting on scroll
+  const links = toc.querySelectorAll('a');
+  const allH2 = Array.from(document.querySelectorAll('main h2'));
+  function onScroll() {
+    let active = null;
+    for (let i = allH2.length - 1; i >= 0; i--) {
+      const rect = allH2[i].getBoundingClientRect();
+      if (rect.top <= 120) {
+        active = allH2[i].id;
+        break;
+      }
+    }
+    links.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + active) {
+        link.classList.add('active');
+      }
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Smooth scroll for anchor links
+  links.forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      const targetId = this.getAttribute('href').substring(1);
+      const target = document.getElementById(targetId);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.pushState(null, '', '#' + targetId);
+        closeSidebar();
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
