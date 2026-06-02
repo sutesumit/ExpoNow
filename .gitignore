@@ -9,3 +9,5 @@ dist/
 build/
 .streamlit/
 .kilo/
+docs/sde_assessment_may_2026.pdf
+docs/bus_charging_scheduler_assignment.md
